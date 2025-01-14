@@ -1,0 +1,67 @@
+.hottest-section {
+  background-color: #b30000; /* Dark red background */
+  color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 100%;
+}
+
+.hottest-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: yellow;
+}
+
+.hottest-book-item {
+  display: flex;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.hot-book-image {
+  width: 70px;
+  height: 80px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 5px;
+}
+
+.hottest-book-info {
+  text-align: left;
+  font-size: 1em;
+}
+
+.hot-book-title {
+  font-weight: bold;
+  color: white;
+  font-size: 17px;
+}
+
+.hottest-book-views {
+  font-size: 0.9em;
+  color: #eee;
+}
+
+.see-more-btn {
+  background-color: yellow;
+  color: black;
+  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  margin-top: 10px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.disabled {
+  opacity: 0.5; /* Làm mờ truyện đã hết hạn */
+  text-decoration: line-through; /* Gạch ngang tiêu đề truyện đã hết hạn */
+}
+
+.expired-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+}

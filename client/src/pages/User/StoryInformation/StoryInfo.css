@@ -1,0 +1,51 @@
+.u-story-name {
+  background-color: #9d0a0a;
+  color: white;
+  padding: 20px;
+  text-align: left;
+  border-radius: 10px;
+}
+
+.u-page-title {
+  font-size: 2rem;
+  margin-top: 10px;
+}
+
+.u-author {
+  margin: 10px 0;
+}
+
+.u-date-info {
+  margin-top: 10px;
+}
+
+.u-story-info {
+  display: flex;
+  align-items: flex-start;
+  margin: 20px 0;
+}
+
+.u-story-cover {
+  width: 35%;
+  margin-right: 40px;
+}
+
+.u-summary {
+  flex-grow: 1;
+}
+
+.u-summary h3 {
+  font-size: 1.5rem;
+  color: #d32f2f;
+}
+
+.u-read-option-button {
+  background-color: #9d0a0a;
+  color: white;
+  border: none;
+  padding: 15px 15px;
+  border-radius: 10px; /* Bo góc cho nút ABC */
+  font-size: 20px;
+  margin-right: 20px;
+  cursor: pointer;
+}

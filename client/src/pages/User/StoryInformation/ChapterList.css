@@ -1,0 +1,30 @@
+.u-chapter-list {
+  margin: 20px 0;
+}
+
+.u-chapter-list h3 {
+  font-size: 1.5rem;
+  color: #9d0a0a;
+  border-bottom: 2px solid #9d0a0a;
+}
+
+.u-chapter-item {
+  font-size: 1.1rem;
+  margin: 10px 0;
+}
+
+.u-chapter-list a {
+  text-decoration: none;
+  color: black; /* giữ màu sắc hoặc thay đổi theo ý muốn */
+}
+
+.locked-chapter a {
+  color: #999; /* Màu nhạt hơn cho chapter bị khóa */
+  pointer-events: none; /* Không cho phép click vào */
+}
+
+.vip-icon {
+  margin-left: 8px;
+  color: gold;
+  font-size: 1.2em;
+}

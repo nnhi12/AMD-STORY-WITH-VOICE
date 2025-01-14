@@ -1,0 +1,246 @@
+/* Căn chỉnh container */
+.main-chapter-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.chapter-content .chapter-post-date {
+  font-size: 16px;
+  margin-left: 10px;
+  margin-top:10px;
+  color: #888;
+  text-align: left; /* Aligns "Posted at" to the left */
+}
+
+.chapter-content .chapter-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #900;
+  text-align: center;
+}
+
+.chapter-content .chapter-now {
+  font-size: 22px;
+  color: #600;
+  text-align: center;
+}
+
+.chapter-content-text {
+  text-align: justify;
+  font-size: 22px;
+  line-height: 3.2;
+  color: #333;
+  margin: 1% 11% 1% 11%;
+}
+
+.chapter-select-buttons {
+  display: flex;
+  justify-content: center; /* Center buttons */
+  gap: 10px; /* Adjust the space between buttons */
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.chapter-select-buttons .chapter-btn {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  padding: 10px 20px;
+}
+
+.chapter-select-buttons .chapter-btn-primary {
+  background-color: #900;
+  border: none;
+}
+
+.chapter-select-buttons .chapter-btn-secondary {
+  background-color: #600;
+  border: none;
+}
+
+
+.u-view-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.u-view-dropdown-menu {
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 1;
+  width: 200px; /* Tuỳ chỉnh kích thước */
+  max-height: 300px; /* Tuỳ chỉnh chiều cao tối đa */
+  overflow-y: auto; /* Thêm cuộn khi cần */
+}
+
+.u-view-dropdown-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.u-view-dropdown-menu li {
+  width: 100%;
+}
+
+.u-view-dropdown-menu button {
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.u-view-dropdown-menu button:hover {
+  background-color: #f0f0f0;
+}
+
+.chapter-btn-disabled {
+  background-color: #ccc; /* Light gray color */
+  color: #666; /* Darker gray for text */
+  cursor: not-allowed; /* Indicate that the button is not clickable */
+}
+
+
+.chapter-btn-secondary {
+  background-color: #842c2c; /* Gray for the secondary button */
+  color: #fff;
+}
+
+
+.chapter-btn-secondary:hover {
+  background-color: #a93030; /* Darker gray for the secondary button on hover */
+}
+
+.comments-list {
+  padding: 1em;
+  border-top: 1px solid #ddd;
+  width: 50%; /* Limit the width of the comment section */
+  margin: 0 auto; /* Center the comment section */
+}
+
+.comment {
+  margin-bottom: 1.5em;
+  padding: 1em;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px; /* Rounded corners for the comment box */
+  background-color: #fafafa; /* Light background for better contrast */
+}
+
+.comment p {
+  margin: 0;
+  font-size: 1em;
+  line-height: 1.5; /* Improved line spacing for readability */
+  color: #333; /* Darker text for better readability */
+}
+
+.comment-input {
+  margin-top: 1.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the input field horizontally */
+  justify-content: center; /* Center the input field vertically */
+  width: 100%; /* Ensure the input section uses full width */
+  max-width: 800px; /* Limit the max width to make the input smaller */
+  margin-left: auto;
+  margin-right: auto; /* Center the input section in the available space */
+}
+
+.comment-input textarea {
+  resize: vertical;
+  padding: 0.75em;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1em;
+  margin-bottom: 1em;
+  font-family: 'Arial', sans-serif;
+  min-height: 80px; /* Reduced height for a smaller input box */
+  max-height: 150px; /* Maximum height for the textarea */
+  box-sizing: border-box;
+  width: 100%; /* Make the text area stretch to fit the container */
+}
+
+.comment-input button {
+  align-self: flex-end;
+  padding: 1em 1em; /* Smaller padding for the button */
+  background-color: #a93030;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: auto;
+  margin-bottom: 10px ;
+}
+
+.comment-input button:hover {
+  background-color: #a93030; /* Darken the button on hover */
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5em;
+}
+
+.comment-header strong {
+  font-size: 1.1em; /* Larger text for the username */
+  color: #007bff; /* Color the username for better visibility */
+  margin-right: 10px;
+}
+
+.comment-header span {
+  margin-left: 10px;
+  font-size: 0.9em; /* Slightly smaller text for the message and timestamp */
+  color: #777; /* Lighter color for the message and timestamp */
+}
+
+.comment-header .comment-user-image {
+  width: 45px; /* Slightly bigger image */
+  height: 45px;
+  border-radius: 50%;
+  margin-right: 12px; /* Add more space between image and text */
+}
+
+.comment-header span:first-of-type {
+  font-weight: normal;
+  color: #333;
+}
+
+.comment-header span:last-of-type {
+  color: #aaa; /* Lighter color for the timestamp */
+}
+
+.comment-header span + span {
+  margin-left: 10px;
+}
+
+
+
+.fixed-audio-btn {
+  position: fixed;
+  padding: 15px;
+  border-radius: 10px;
+  bottom: 20px; /* Cách đáy 20px */
+  right: 20px; /* Cách phải 20px */
+  z-index: 1000; /* Đảm bảo nằm trên các nội dung khác */
+}
+
+
+.audio-buttons { 
+  position: fixed; 
+  padding: 10px;
+  border-radius: 10px;
+  bottom: 20px; 
+  right: 20px; 
+  z-index: 1000; }
+
+.chapter-btn { margin: 0 5px; }

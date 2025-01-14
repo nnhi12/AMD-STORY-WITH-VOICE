@@ -1,0 +1,53 @@
+.list-genre-section {
+    background-color: #b30000; /* Dark red background */
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .list-genre-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: yellow;
+  }
+  
+  .list-genre-book-item {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+  }
+  
+  .list-genre-book-image {
+    width: 70px;
+    height: 80px;
+    object-fit: cover;
+    margin-right: 15px;
+    border-radius: 5px;
+  }
+  
+  .list-genre-book-info {
+    text-align: left;
+    font-size: 1em;
+  }
+  
+  .list-genre-book-title {
+    font-weight: bold;
+    color: white;
+    font-size: 17px;
+    text-decoration: underline; /* Gạch chân */
+    cursor: pointer; /* Thay đổi kiểu con trỏ khi đưa chuột vào */
+}
+
+.list-genre-book-item:hover .list-genre-book-title {
+    color: yellow; /* Thay đổi màu chữ khi hover */
+    text-decoration: underline; /* Gạch chân vẫn hiển thị khi hover */
+}
+
+  
+  .list-genre-book-views {
+    font-size: 0.9em;
+    color: #eee;
+  }
+  

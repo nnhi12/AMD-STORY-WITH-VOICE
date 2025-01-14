@@ -1,0 +1,134 @@
+.u-header {
+  background-color: black;
+  color: white;
+  padding: 10px;
+  position: sticky; /* Giữ header cố định ở phía trên */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; 
+  }
+  
+  .u-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Đưa logo và các mục điều hướng ra xa nhau */
+    background-color: black;
+    padding: 10px 20px;
+  }
+  
+  .u-logo {
+    display: flex;
+    align-items: center;
+  }
+  
+  .u-logo img {
+    height: 50px;
+    margin-right: 0px;
+  }
+  
+  .u-search-bar {
+    display: flex;
+    align-items: center;
+    background-color: black;
+    padding: 5px;
+    border-radius: 5px;
+    width: 40%;
+    margin-left: 0%;
+  }
+  
+  .u-search-bar input {
+    flex: 1;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 5px;
+  }
+  
+  .u-search-bar input::placeholder {
+    color: black;
+  }
+
+  .search-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    width: 33px;  /* Điều chỉnh kích thước hình ảnh */
+    height: 33px;
+  }
+  
+  .u-search-bar img {
+    width: 34px;  /* Điều chỉnh kích thước hình ảnh */
+    height: 34px;
+  }
+  
+  .u-search-bar input,
+  .u-search-bar button {
+    border-bottom: 1px solid white;
+  }
+  
+  .u-search-bar button i {
+    transition: color 0.3s ease;
+  }
+  
+  .u-search-bar button:hover i {
+    color: #ccc;
+  }
+  .u-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .u-nav-links a {
+    margin: 0 20px;
+    text-decoration: none;
+    color: white;
+    font-size:20px;
+  }
+  
+  .abc-button {
+    background-color: #9d0a0a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px; /* Bo góc cho nút ABC */
+    font-size: 20px;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .a-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 100;
+  }
+  
+  .a-dropdown-menu a,
+  .a-dropdown-menu button {
+    display: block;
+    padding: 8px 12px;
+    color: black;
+    text-decoration: none;
+    background: none;
+    border: 1px gray;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .a-dropdown-menu a:hover,
+  .a-dropdown-menu button:hover {
+    background-color: #f1f1f1;
+  }
+
+  
