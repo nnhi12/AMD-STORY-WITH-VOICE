@@ -1,0 +1,90 @@
+.u-book-image {
+    width: 200px;   /* Set the width */
+    height: 250px;  /* Set the height to make it a square */
+    object-fit: cover; /* Crop the image to fill the square without distortion */
+    border-radius: 8px; /* Optional: Rounded corners */
+  }
+  
+  .u-book-title {
+    font-size: 0.9em;
+    color: #333;
+    margin-top: 8px;
+  }
+
+  .u-text-decoration-none {
+    text-decoration: none;
+  }
+  .u-text-dark {
+    color: black;
+  }
+  .u-text-dark:hover {
+    color: #333; 
+  }
+
+  .fav-chapter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+  }
+  .fav-chapter-list a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  .fav-chapter-list a:hover {
+    text-decoration: underline;
+  }
+
+  .custom-context-menu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    padding: 5px 0;
+    width: 150px;
+  }
+  
+  .custom-context-menu div {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .custom-context-menu div:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .progress {
+    background-color: #f3f3f3;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    transition: width 0.3s ease;
+  }
+  
+  .custom-context-menu .disabled {
+    color: gray;
+    pointer-events: none; /* Ngừng tương tác với mục này */
+}
+
+.disabled-link {
+  pointer-events: none; /* Ngừng tương tác với liên kết */
+  color: gray; /* Tạo màu xám cho các phần tử bị vô hiệu hóa */
+}
+
+.disabled-text {
+  color: gray; /* Tạo màu xám cho tên truyện */
+}
+
+.disabled-image {
+  opacity: 0.5; /* Giảm độ mờ của hình ảnh để làm rõ rằng nó bị vô hiệu hóa */
+}
+
+.disabled {
+  pointer-events: none; /* Ngừng tương tác với các mục trong context menu */
+  color: gray; /* Tạo màu xám cho các mục bị vô hiệu hóa trong menu */
+}

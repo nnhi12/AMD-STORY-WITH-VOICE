@@ -1,0 +1,112 @@
+.login-body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('https://wallpapers.com/images/hd/one-piece-zoro-manga-bm23qxb4xo77mf44.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.body-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+.login-container {
+    background: #d9534f;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+    width: 400px;
+    height: 350px;
+    position: relative;
+    z-index: 2;
+    text-align: center; /* Căn giữa nội dung bên trong */
+}
+
+.login-container h2 {
+    text-align: center;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #e19494;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.login-container button:hover {
+    background-color: #f4cccc;
+}
+
+.sign-up-text {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #f4cccc;
+}
+
+.sign-up-text a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.sign-up-text a:hover {
+    color: #ffffff;
+}
+
+.forgot-password-text {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #ffffff; /* Chỉnh màu trắng */
+    text-align: center; /* Căn giữa */
+}
+
+.forgot-password-text a {
+    text-decoration: none;
+    color: #ffffff; /* Màu trắng */
+}
+
+.forgot-password-text a:hover {
+    text-decoration: underline;
+}
+
+.back-button {
+    position: absolute; /* Định vị nút Quay lại */
+    top: 20px; /* Căn từ trên xuống */
+    left: 20px; /* Căn từ trái sang */
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    color: #333;
+    z-index: 3; /* Hiển thị trên các thành phần khác */
+}
+
+.back-button:hover {
+    background-color: #e0e0e0;
+}

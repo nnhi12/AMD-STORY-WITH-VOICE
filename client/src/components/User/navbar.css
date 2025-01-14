@@ -1,0 +1,59 @@
+/* CSS cho Navbar */
+.u-nav-bar {
+  background-color: #9d0a0a;
+  padding: 10px;
+  display: flex;
+  justify-content: space-around;
+  position: sticky; /* Giữ navbar cố định */
+  top: 90px; /* Đặt navbar ngay dưới header (60px là chiều cao của header) */
+  left: 0;
+  width: 100%; /* Đảm bảo navbar chiếm toàn bộ chiều rộng */
+  z-index: 999; /* Đặt navbar dưới header */
+}
+
+.u-nav-bar a {
+  color: white;
+  text-decoration: none;
+}
+
+.u-genre-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.u-genre-dropbtn {
+  background-color: #9d0a0a;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.u-genre-dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.u-genre-dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.u-genre-dropdown-content a:hover {
+  background-color: #ddd;
+}
+
+.u-genre-dropdown:hover .u-genre-dropdown-content {
+  display: block;
+}
+
+.u-genre-dropdown:hover .u-genre-dropbtn {
+  background-color: darkred;
+}

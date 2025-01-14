@@ -1,0 +1,28 @@
+.newest-chapter {
+  background-color: #d32f2f;
+  color: white;
+  padding: 20px;
+  margin: 20px 0;
+  }
+  
+  .newest-chapter h3 {
+    font-size: 1.5rem;
+  }
+  
+  .newest-item {
+    font-size: 1.1rem;
+    margin: 10px 0;
+  }
+  
+  .newest-item span {
+    display: block;
+    padding: 10px;
+    background-color: #d32f2f;
+    color: white;
+    border-radius: 5px;
+  }
+  
+  .newest-chapter a {
+    text-decoration: none;
+    color: white; /* giữ màu sắc hoặc thay đổi theo ý muốn */
+}

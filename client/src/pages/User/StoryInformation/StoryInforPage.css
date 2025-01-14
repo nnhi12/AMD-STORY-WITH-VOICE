@@ -1,0 +1,42 @@
+/* MainPage.css */
+
+/* General Layout for the Page */
+.story-info-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.story-info-content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.story-info-container {
+  margin-bottom: 20px;
+}
+
+.chapter-newest-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.chapter-list-container {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.newest-chapter-container {
+  flex: 1;
+}
+
+/* Optional: You can control the width ratio if you want NewestChapter to be narrower */
+.chapter-list-container {
+  flex: 2; /* Occupy more space */
+}
+
+.newest-chapter-container {
+  flex: 1; /* Occupy less space */
+}

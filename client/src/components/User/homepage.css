@@ -1,0 +1,39 @@
+.u-main-page{
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .main-page-content {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+  
+  .banner-container {
+    margin-bottom: 15px;
+  }
+  
+  .second-section-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  
+  .first-section-container {
+    flex: 1;
+    margin-right: 20px;
+  }
+  
+  .second-section-container {
+    flex: 1;
+  }
+  
+  .first-section-container {
+    flex: 3; 
+  }
+  
+  .second-section-container {
+    flex: 1;
+  }
+  

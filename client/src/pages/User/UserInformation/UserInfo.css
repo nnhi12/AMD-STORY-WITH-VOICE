@@ -1,0 +1,83 @@
+
+  .profile-container {
+    background-color: #fff0f5;
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .profile-img img {
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+  
+  .profile-username {
+    font-weight: bold;
+    margin: 20px 0;
+  }
+  
+  .profile-form-group {
+    margin: 20px 0;
+    text-align: left;
+  }
+  
+  .profile-form-group label {
+    display: block;
+    font-size: 1em;
+    margin-bottom: 20px;
+  }
+  
+  .profile-form-group input {
+    width: 100%;
+    padding: 8px;
+    font-size: 1em;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+  
+  .profile-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .profile-password-wrapper input {
+    flex: 1;
+  }
+  
+  .profile-toggle-password {
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    font-size: 1em;
+  }
+  
+  .profile-button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+  }
+  
+  .profile-edit-button,
+  .profile-save-button {
+    background-color: #b71c1c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  
+  .profile-edit-button:hover,
+  .profile-save-button:hover {
+    background-color: #d32f2f;
+  }
+  

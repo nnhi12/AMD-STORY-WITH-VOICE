@@ -1,0 +1,174 @@
+/* Reset styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.body-regis {
+  font-family: 'Arial', sans-serif;
+  background-color: #3c2f2f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+}
+
+.signup-container {
+  text-align: center;
+  color: #f4cccc;
+}
+
+.regis-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.regis-content-wrapper {
+  display: flex;
+  background-color: #3c2f2f;
+  border-radius: 10px;
+  padding: 0; /* Remove padding to eliminate gaps */
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+}
+
+.regis-image-section {
+  position: relative;
+}
+
+.regis-image-overlay {
+  position: relative;
+  display: flex;
+}
+
+.regis-image-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+  border-radius: 10px 0 0 10px;
+}
+
+.regis-image-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px 0 0 10px;
+}
+
+.regis-form-section {
+  background-color: #d9534f;
+  padding: 20px;
+  border-radius: 0 10px 10px 0; /* Rounded corners for form side */
+  color: #5a5050;
+}
+
+.regis-form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.regis-form-group label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.regis-form-group input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-bottom: 1px solid #f4cccc;
+  background-color: transparent;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+}
+
+.password-match-check {
+  color: green;
+  margin-top: 5px;
+}
+
+.checkmark {
+  font-size: 18px;
+}
+
+.register-button {
+  background-color: #f4cccc;
+  color: #3c2f2f;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.register-button:hover {
+  background-color: #f7d7d7;
+}
+
+.login-text {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #f4cccc;
+}
+
+.login-text a {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.login-text a:hover {
+  color: #ffffff;
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+  .regis-content-wrapper {
+      flex-direction: column;
+  }
+
+  .regis-image-section, .regis-form-section {
+      width: 100%;
+  }
+}
+
+.password-length-warning {
+  color: white;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.password-match-check {
+  color: green;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.register-button:disabled {
+  background-color: grey;
+  cursor: not-allowed;
+}

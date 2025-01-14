@@ -1,0 +1,11 @@
+.all-page{
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .all-content {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
