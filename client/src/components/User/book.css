@@ -1,90 +1,173 @@
+/* Default styling (for desktop and larger screens) */
 .u-book-image {
-    width: 200px;   /* Set the width */
-    height: 250px;  /* Set the height to make it a square */
-    object-fit: cover; /* Crop the image to fill the square without distortion */
-    border-radius: 8px; /* Optional: Rounded corners */
-  }
-  
-  .u-book-title {
-    font-size: 0.9em;
-    color: #333;
-    margin-top: 8px;
-  }
+  width: 200px;
+  height: 250px;
+  object-fit: cover; /* Crop the image to fill the area without distortion */
+  border-radius: 8px; /* Optional: Rounded corners */
+  display: block; /* Ensure the image is treated as a block element */
+}
 
-  .u-text-decoration-none {
-    text-decoration: none;
-  }
-  .u-text-dark {
-    color: black;
-  }
-  .u-text-dark:hover {
-    color: #333; 
-  }
+.u-book-title {
+  font-size: 0.9em;
+  color: #333;
+  margin-top: 8px;
+  text-align: center; /* Center-align text */
+}
 
-  .fav-chapter-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-size: 0.9rem;
-    color: #555;
-  }
-  .fav-chapter-list a {
-    color: #007bff;
-    text-decoration: none;
-  }
-  .fav-chapter-list a:hover {
-    text-decoration: underline;
-  }
+.u-text-decoration-none {
+  text-decoration: none;
+}
 
-  .custom-context-menu {
-    position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    padding: 5px 0;
-    width: 150px;
-  }
-  
-  .custom-context-menu div {
-    padding: 8px 12px;
-    cursor: pointer;
-  }
-  
-  .custom-context-menu div:hover {
-    background-color: #f1f1f1;
-  }
-  
-  .progress {
-    background-color: #f3f3f3;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .progress-bar {
-    transition: width 0.3s ease;
-  }
-  
-  .custom-context-menu .disabled {
-    color: gray;
-    pointer-events: none; /* Ngừng tương tác với mục này */
+.u-text-dark {
+  color: black;
+}
+
+.u-text-dark:hover {
+  color: #333; /* Darker shade on hover for better visibility */
+}
+
+.fav-chapter-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.fav-chapter-list a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.fav-chapter-list a:hover {
+  text-decoration: underline;
+}
+
+.custom-context-menu {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  padding: 5px 0;
+  width: 150px;
+}
+
+.custom-context-menu div {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.custom-context-menu div:hover {
+  background-color: #f1f1f1;
+}
+
+.progress {
+  background-color: #f3f3f3;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px; /* Add height to progress bar */
+}
+
+.progress-bar {
+  transition: width 0.3s ease;
+  height: 100%; /* Ensure the bar stretches to the full height of the container */
+  background-color: #007bff; /* Optional: add a color to the progress bar */
+}
+
+.custom-context-menu .disabled {
+  color: gray;
+  pointer-events: none; /* Disable interaction with this item */
 }
 
 .disabled-link {
-  pointer-events: none; /* Ngừng tương tác với liên kết */
-  color: gray; /* Tạo màu xám cho các phần tử bị vô hiệu hóa */
+  pointer-events: none; /* Disable interaction with the link */
+  color: gray; /* Grayscale color for disabled links */
 }
 
 .disabled-text {
-  color: gray; /* Tạo màu xám cho tên truyện */
+  color: gray; /* Grayscale color for disabled text */
 }
 
 .disabled-image {
-  opacity: 0.5; /* Giảm độ mờ của hình ảnh để làm rõ rằng nó bị vô hiệu hóa */
+  opacity: 0.5; /* Reduce opacity to indicate the image is disabled */
 }
 
 .disabled {
-  pointer-events: none; /* Ngừng tương tác với các mục trong context menu */
-  color: gray; /* Tạo màu xám cho các mục bị vô hiệu hóa trong menu */
+  pointer-events: none; /* Disable interaction with the elements in the context menu */
+  color: gray; /* Grayscale color for disabled elements in the menu */
+}
+
+/* Responsive adjustments for tablets */
+@media (max-width: 860px) {
+  .u-book-image {
+      width: 150px;  /* Resize image for smaller screens */
+      height: 180px;
+  }
+
+  .u-book-title {
+      font-size: 1.5em;  /* Increase font size for better readability */
+  }
+
+  .fav-chapter-list {
+      font-size: 0.8rem;  /* Slightly increase font size */
+  }
+
+  .custom-context-menu {
+      width: 120px;  /* Make the context menu smaller for tablet */
+  }
+
+  .progress {
+      height: 6px;  /* Adjust the height of progress bar */
+  }
+}
+
+/* Responsive adjustments for mobile devices */
+@media (max-width: 710px) {
+  .u-book-image {
+      width: 130px;  /* Resize image for mobile */
+      height: 140px;
+  }
+
+  .u-book-title {
+      font-size: 1.5em;  /* Increase font size for better readability on small screens */
+      text-align: center;  /* Center the title on mobile */
+  }
+
+  .fav-chapter-list {
+      font-size: 0.7rem;  /* Increase font size for better readability */
+  }
+
+  .custom-context-menu {
+      width: 100px;  /* Make the context menu even smaller for mobile */
+  }
+
+  .progress {
+      height: 4px;  /* Adjust height for mobile */
+  }
+}
+
+@media (max-width: 610px) {
+  .u-book-image {
+    width: 90px;  /* Resize image for mobile */
+    height: 120px;
+}
+
+.u-book-title {
+    font-size: 1.1em;  /* Increase font size for better readability on small screens */
+    text-align: center;  /* Center the title on mobile */
+}
+
+.fav-chapter-list {
+    font-size: 0.5rem;  /* Increase font size for better readability */
+}
+
+.custom-context-menu {
+    width: 100px;  /* Make the context menu even smaller for mobile */
+}
+
+.progress {
+    height: 1px;  /* Adjust height for mobile */
+}
 }

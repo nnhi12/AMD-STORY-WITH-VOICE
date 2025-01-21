@@ -1,53 +1,112 @@
 .list-genre-section {
-    background-color: #b30000; /* Dark red background */
-    color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    width: 100%;
-  }
-  
-  .list-genre-title {
-    font-size: 1.5em;
-    font-weight: bold;
-    color: yellow;
-  }
-  
-  .list-genre-book-item {
-    display: flex;
-    align-items: center;
-    margin: 15px 0;
-  }
-  
-  .list-genre-book-image {
-    width: 70px;
-    height: 80px;
-    object-fit: cover;
-    margin-right: 15px;
-    border-radius: 5px;
-  }
-  
-  .list-genre-book-info {
-    text-align: left;
-    font-size: 1em;
-  }
-  
-  .list-genre-book-title {
-    font-weight: bold;
-    color: white;
-    font-size: 17px;
-    text-decoration: underline; /* Gạch chân */
-    cursor: pointer; /* Thay đổi kiểu con trỏ khi đưa chuột vào */
+  background-color: #b30000; /* Dark red background */
+  color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 100%;
+}
+
+.list-genre-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: yellow;
+}
+
+.list-genre-book-item {
+  display: flex;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.list-genre-book-image {
+  width: 70px;
+  height: 80px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 5px;
+}
+
+.list-genre-book-info {
+  text-align: left;
+  font-size: 1em;
+}
+
+.list-genre-book-title {
+  font-weight: bold;
+  color: white;
+  font-size: 17px;
+  text-decoration: underline; /* Gạch chân */
+  cursor: pointer; /* Thay đổi kiểu con trỏ khi đưa chuột vào */
 }
 
 .list-genre-book-item:hover .list-genre-book-title {
-    color: yellow; /* Thay đổi màu chữ khi hover */
-    text-decoration: underline; /* Gạch chân vẫn hiển thị khi hover */
+  color: yellow; /* Thay đổi màu chữ khi hover */
+  text-decoration: underline; /* Gạch chân vẫn hiển thị khi hover */
 }
 
-  
-  .list-genre-book-views {
-    font-size: 0.9em;
-    color: #eee;
+.list-genre-book-views {
+  font-size: 0.9em;
+  color: #eee;
+}
+
+/* Responsive Styles */
+
+/* Medium screens (max-width: 768px) */
+@media (max-width: 860px) {
+  .list-genre-title {
+    font-size: 1.3em; /* Giảm kích thước tiêu đề */
   }
-  
+
+  .list-genre-book-image {
+    width: 60px;
+    height: 70px;
+  }
+
+  .list-genre-book-title {
+    font-size: 15px; /* Giảm kích thước chữ tiêu đề sách */
+  }
+
+  .list-genre-book-views {
+    font-size: 0.8em; /* Giảm kích thước chữ số lượt xem */
+  }
+}
+
+/* Small screens (max-width: 480px) */
+@media (max-width: 710px) {
+  .list-genre-title {
+    font-size: 1.1em; /* Nhỏ hơn nữa trên màn hình rất nhỏ */
+  }
+
+  .list-genre-book-image {
+    width: 50px;
+    height: 60px;
+  }
+
+  .list-genre-book-title {
+    font-size: 10px; /* Nhỏ hơn nữa trên màn hình nhỏ */
+  }
+
+  .list-genre-book-views {
+    font-size: 0.7em; /* Giảm kích thước chữ số lượt xem */
+  }
+}
+
+@media (max-width: 610px) {
+  .list-genre-title {
+    font-size: 1.1em; /* Nhỏ hơn nữa trên màn hình rất nhỏ */
+  }
+
+  .list-genre-book-image {
+    width: 70px;
+    height: 80px;
+  }
+
+  .list-genre-book-title {
+    font-size: 10px; /* Nhỏ hơn nữa trên màn hình nhỏ */
+  }
+
+  .list-genre-book-views {
+    font-size: 0.7em; /* Giảm kích thước chữ số lượt xem */
+  }
+}
