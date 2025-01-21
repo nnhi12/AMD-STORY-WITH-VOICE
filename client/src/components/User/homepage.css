@@ -1,39 +1,103 @@
-.u-main-page{
+.u-main-page {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-  }
-  
-  .main-page-content {
+}
+
+.main-page-content {
     display: flex;
     flex-direction: column;
     padding: 20px;
-  }
-  
-  .banner-container {
+}
+
+.banner-container {
     margin-bottom: 15px;
-  }
-  
-  .second-section-container {
+}
+
+.second-section-container {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-  }
-  
-  .first-section-container {
-    flex: 1;
+}
+
+.first-section-container {
+    flex: 3;
     margin-right: 20px;
-  }
-  
-  .second-section-container {
+}
+
+.second-section-container {
     flex: 1;
-  }
-  
-  .first-section-container {
-    flex: 3; 
-  }
-  
-  .second-section-container {
-    flex: 1;
+}
+
+/* Responsive adjustments for tablet (max-width: 768px) */
+@media (max-width: 860px) {
+    .main-page-content {
+        padding: 15px;
+    }
+
+    .banner-container {
+        margin-bottom: 10px;
+    }
+
+    /* .second-section-container {
+        flex-direction: column;
+        align-items: center;
+    } */
+
+    .first-section-container {
+        flex: 3;
+        margin-right: 0;
+    }
+
+    .second-section-container {
+        flex: 1;
+    }
+
+    /* Responsive typography for tablet */
+    body, p {
+        font-size: 10px; /* Giảm kích thước chữ một chút cho tablet */
+    }
+}
+
+/* Responsive adjustments for mobile devices (max-width: 480px) */
+@media (max-width: 710px) {
+    .main-page-content {
+        padding: 10px;
+    }
+
+    .banner-container {
+        margin-bottom: 8px;
+    }
+/* 
+    .second-section-container {
+        flex-direction: column;
+        align-items: center;
+    } */
+
+    /* Responsive typography for mobile */
+    body, p {
+        font-size: 9px; /* Giảm thêm chữ cho di động để vừa màn hình */
+    }
+}
+
+
+@media (max-width: 610px) {
+    .main-page-content {
+        padding: 10px;
+    }
+
+    .banner-container {
+        margin-bottom: 8px;
+    }
+/* 
+    .second-section-container {
+        flex-direction: column;
+        align-items: center;
+    } */
+
+    /* Responsive typography for mobile */
+    body, p {
+        font-size: 9px; /* Giảm thêm chữ cho di động để vừa màn hình */
+    }
   }
   

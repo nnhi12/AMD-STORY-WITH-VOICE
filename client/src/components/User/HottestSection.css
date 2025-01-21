@@ -65,3 +65,80 @@
   font-size: 14px;
   margin-top: 5px;
 }
+
+/* Responsive Styles */
+
+/* Small screens (max-width: 768px) */
+@media (max-width: 860px) {
+  .hottest-title {
+    font-size: 1.2em; /* Giảm kích thước tiêu đề */
+  }
+
+  .hot-book-image {
+    width: 60px;
+    height: 70px;
+  }
+
+  .hot-book-title {
+    font-size: 10px; /* Giảm kích thước tiêu đề truyện */
+  }
+
+  .hottest-book-views {
+    font-size: 0.8em; /* Giảm kích thước chữ số lượt xem */
+  }
+
+  .see-more-btn {
+    font-size: 0.9em; /* Giảm kích thước chữ của nút */
+    padding: 6px 12px;
+  }
+}
+
+/* Extra Small screens (max-width: 480px) */
+@media (max-width: 710px) {
+  .hottest-title {
+    font-size: 1em; /* Tiêu đề nhỏ hơn trên màn hình rất nhỏ */
+  }
+
+  .hot-book-image {
+    width: 40px;
+    height: 50px;
+  }
+
+  .hot-book-title {
+    font-size: 8px; /* Nhỏ hơn nữa trên màn hình nhỏ */
+  }
+
+  .hottest-book-views {
+    font-size: 0.7em; /* Giảm kích thước chữ số lượt xem */
+  }
+
+  .see-more-btn {
+    font-size: 0.8em; /* Nhỏ hơn nữa cho nút */
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 610px) {
+  .hottest-title {
+    font-size: 1em; /* Tiêu đề nhỏ hơn trên màn hình rất nhỏ */
+  }
+
+  .hot-book-image {
+    width: 30px;
+    height: 40px;
+  }
+
+  .hot-book-title {
+    font-size: 6.5px; /* Nhỏ hơn nữa trên màn hình nhỏ */
+  }
+
+  .hottest-book-views {
+    font-size: 0.7em; /* Giảm kích thước chữ số lượt xem */
+  }
+
+  .see-more-btn {
+    font-size: 0.8em; /* Nhỏ hơn nữa cho nút */
+    padding: 5px 10px;
+  }
+}
+

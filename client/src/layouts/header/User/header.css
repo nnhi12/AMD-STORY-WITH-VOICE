@@ -7,128 +7,193 @@
   left: 0;
   width: 100%;
   z-index: 1000; 
-  }
-  
-  .u-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Đưa logo và các mục điều hướng ra xa nhau */
-    background-color: black;
-    padding: 10px 20px;
-  }
-  
-  .u-logo {
-    display: flex;
-    align-items: center;
-  }
-  
+}
+
+.u-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Đưa logo và các mục điều hướng ra xa nhau */
+  padding: 10px 20px;
+}
+
+.u-logo {
+  display: flex;
+  align-items: center;
+}
+
+.u-logo img {
+  height: 50px;
+  transition: height 0.3s ease;
+}
+
+.u-search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #333; /* Màu nền tối hơn để phân biệt */
+  padding: 5px;
+  border-radius: 5px;
+  width: 40%;
+}
+
+.u-search-bar input {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 5px;
+}
+
+.u-search-bar input::placeholder {
+  color: #ccc;
+}
+
+.search-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 33px;
+  height: 33px;
+}
+
+.u-search-bar img {
+  width: 34px;
+  height: 34px;
+}
+
+.u-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.u-nav-links a {
+  text-decoration: none;
+  color: white;
+  font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.u-nav-links a:hover {
+  color: #ffcc00; /* Hiệu ứng hover đổi màu */
+}
+
+.abc-button {
+  background-color: #9d0a0a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.abc-button:hover {
+  background-color: #b32424;
+}
+
+.a-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 100;
+  display: none; /* Ẩn menu theo mặc định */
+}
+
+.abc-button:hover .a-dropdown-menu {
+  display: block; /* Hiển thị menu khi hover */
+}
+
+.a-dropdown-menu a,
+.a-dropdown-menu button {
+  display: block;
+  padding: 8px 12px;
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-size: 16px;
+}
+
+.a-dropdown-menu a:hover,
+.a-dropdown-menu button:hover {
+  background-color: #f1f1f1;
+}
+
+/* Responsive Styles */
+
+/* Medium screens (max-width: 768px) */
+@media (max-width: 860px) {
   .u-logo img {
-    height: 50px;
-    margin-right: 0px;
+    height: 30px; /* Giảm kích thước logo cho màn hình nhỏ */
   }
-  
+
   .u-search-bar {
-    display: flex;
-    align-items: center;
-    background-color: black;
-    padding: 5px;
-    border-radius: 5px;
-    width: 40%;
-    margin-left: 0%;
-  }
-  
-  .u-search-bar input {
-    flex: 1;
-    background-color: transparent;
-    border: none;
-    outline: none;
-    color: white;
-    padding: 5px;
-  }
-  
-  .u-search-bar input::placeholder {
-    color: black;
+    width: 50%;
+    margin-right: 5px; /* Tăng kích thước thanh tìm kiếm */
   }
 
-  .search-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    width: 33px;  /* Điều chỉnh kích thước hình ảnh */
-    height: 33px;
-  }
-  
-  .u-search-bar img {
-    width: 34px;  /* Điều chỉnh kích thước hình ảnh */
-    height: 34px;
-  }
-  
-  .u-search-bar input,
-  .u-search-bar button {
-    border-bottom: 1px solid white;
-  }
-  
-  .u-search-bar button i {
-    transition: color 0.3s ease;
-  }
-  
-  .u-search-bar button:hover i {
-    color: #ccc;
-  }
-  .u-nav-links {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-  
   .u-nav-links a {
-    margin: 0 20px;
-    text-decoration: none;
-    color: white;
-    font-size:20px;
-  }
-  
-  .abc-button {
-    background-color: #9d0a0a;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px; /* Bo góc cho nút ABC */
-    font-size: 20px;
-    cursor: pointer;
-    position: relative;
-  }
-  
-  .a-dropdown-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: white;
-    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 100;
-  }
-  
-  .a-dropdown-menu a,
-  .a-dropdown-menu button {
-    display: block;
-    padding: 8px 12px;
-    color: black;
-    text-decoration: none;
-    background: none;
-    border: 1px gray;
-    cursor: pointer;
-    width: 100%;
-    text-align: left;
-  }
-  
-  .a-dropdown-menu a:hover,
-  .a-dropdown-menu button:hover {
-    background-color: #f1f1f1;
+    font-size: 12px; /* Giảm kích thước font cho điều hướng */
   }
 
-  
+  .abc-button {
+    font-size: 13px; /* Giảm kích thước nút */
+    padding: 16px 11px;
+  }
+}
+
+/* Small screens (max-width: 480px) */
+@media (max-width: 710px) {
+  .u-logo img {
+    height: 20px; /* Tiếp tục giảm kích thước logo cho màn hình rất nhỏ */
+  }
+
+  .u-search-bar {
+    width: 50%; /* Chiếm toàn bộ chiều rộng */
+    margin-bottom: 10px;
+  }
+
+  .u-nav-links a {
+    font-size: 11px; /* Giảm kích thước font cho điều hướng */
+  }
+
+  .abc-button {
+    font-size: 10px;
+    padding: 10px 8px;
+  }
+}
+
+@media (max-width: 610px) {
+  .u-logo img {
+    height: 20px; /* Tiếp tục giảm kích thước logo cho màn hình rất nhỏ */
+  }
+
+  .u-search-bar {
+    width: 37%; /* Chiếm toàn bộ chiều rộng */
+    margin-bottom: 10px;
+  }
+
+  .u-search-bar img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .u-nav-links a {
+    font-size: 8.5px; /* Giảm kích thước font cho điều hướng */
+  }
+
+  .abc-button {
+    font-size: 9px;
+    padding: 9px 7px;
+  }
+}

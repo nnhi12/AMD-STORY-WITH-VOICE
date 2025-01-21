@@ -1,23 +1,38 @@
 .u-footer {
-    background-color: black;
-    color: white;
-    padding: 10px;
-    text-align: center;
-  }
-  
-  .u-footer-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
+  background-color: black;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+.u-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  margin-right: 20%;
+}
+
+.u-footer-logo {
+  height: 50px;
+  margin-right: 10%;
+}
+
+.contact-email {
+  color: #ff6347;
+}
+
+@media (max-width: 860px) {
+  .u-footer-logo {
+    height: 35px;
     margin-right: 20%;
   }
-  
+}
+
+
+@media (max-width: 610px) {
   .u-footer-logo {
-    height: 50px;
-    margin-right: 10%;
+    height: 25px;
+    margin-right: 20%;
   }
-  
-  .contact-email {
-    color: #ff6347;
-  }
+}

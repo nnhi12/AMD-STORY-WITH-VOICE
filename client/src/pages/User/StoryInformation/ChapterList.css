@@ -28,3 +28,51 @@
   color: gold;
   font-size: 1.2em;
 }
+
+@media (max-width: 860px) {
+  .u-chapter-list h3 {
+    font-size: 1.1rem;
+  }
+  
+  .u-chapter-item {
+    font-size: 1rem;
+  }
+  
+  .vip-icon {
+    margin-left: 8px;
+    color: gold;
+    font-size: 1.1em;
+  }
+}
+
+@media (max-width: 710px) {
+  .u-chapter-list h3 {
+    font-size: 1.1rem;
+  }
+  
+  .u-chapter-item {
+    font-size: 0.9rem;
+  }
+  
+  .vip-icon {
+    margin-left: 8px;
+    color: gold;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 610px) {
+  .u-chapter-list h3 {
+    font-size: 1rem;
+  }
+  
+  .u-chapter-item {
+    font-size: 0.8rem;
+  }
+  
+  .vip-icon {
+    margin-left: 8px;
+    color: gold;
+    font-size: 1em;
+  }
+}

@@ -46,6 +46,69 @@
   padding: 15px 15px;
   border-radius: 10px; /* Bo góc cho nút ABC */
   font-size: 20px;
-  margin-right: 20px;
+  margin-right: 10px;
   cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .u-story-name {
+    padding: 9px;
+  }
+  
+  .u-page-title {
+    font-size: 1.8rem;
+    margin-top: 10px;
+  }
+  
+  .u-summary h3 {
+    font-size: 1.7rem;
+    color: #d32f2f;
+  }
+  
+  .u-read-option-button {
+    padding: 12px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 710px) {
+  .u-story-name {
+    padding: 8px;
+  }
+  
+  .u-page-title {
+    font-size: 1.5rem;
+    margin-top: 10px;
+  }
+  
+  .u-summary h3 {
+    font-size: 1.4rem;
+    color: #d32f2f;
+  }
+  
+  .u-read-option-button {
+    padding: 10px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 610px) {
+  .u-story-name {
+    padding: 8px;
+  }
+  
+  .u-page-title {
+    font-size: 1.2rem;
+    margin-top: 10px;
+  }
+  
+  .u-summary h3 {
+    font-size: 1.1rem;
+    color: #d32f2f;
+  }
+  
+  .u-read-option-button {
+    padding: 8px 8px;
+    font-size: 9px;
+  }
 }

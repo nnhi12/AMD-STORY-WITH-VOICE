@@ -82,3 +82,44 @@
   box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.15);
   transform: translateY(-5px);
 }
+
+@media (max-width: 860px) {
+  .about-container h1 {
+    font-weight: 500;
+  }
+  
+  .about-container h2 {
+    font-weight: 250;
+  }
+  
+  .about-container p {
+    font-size: 1.1rem;
+  }
+}
+@media (max-width: 710px) {
+  .about-container h1 {
+    font-weight: 400;
+  }
+  
+  .about-container h2 {
+    font-weight: 300;
+  }
+  
+  .about-container p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 610px) {
+  .about-container h1 {
+    font-weight: 300;
+  }
+  
+  .about-container h2 {
+    font-weight: 150;
+  }
+  
+  .about-container p {
+    font-size: 0.8rem;
+  }
+}
