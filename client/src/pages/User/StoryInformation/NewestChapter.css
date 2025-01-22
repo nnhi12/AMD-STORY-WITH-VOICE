@@ -26,3 +26,33 @@
     text-decoration: none;
     color: white; /* giữ màu sắc hoặc thay đổi theo ý muốn */
 }
+
+@media (max-width: 710px) {
+  .newest-chapter h3 {
+    font-size: 1.05rem;
+  }
+  
+  .newest-chapter a {
+    font-size: 0.9rem;
+}
+}
+
+@media (max-width: 710px) {
+  .newest-chapter h3 {
+    font-size: 0.95rem;
+  }
+  
+  .newest-chapter a {
+    font-size: 0.8rem;
+}
+}
+
+@media (max-width: 610px) {
+  .newest-chapter h3 {
+    font-size: 0.8rem;
+  }
+  
+  .newest-chapter a {
+    font-size: 0.7rem;
+}
+}

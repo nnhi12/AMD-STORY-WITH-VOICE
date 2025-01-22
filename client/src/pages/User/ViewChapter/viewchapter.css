@@ -244,3 +244,129 @@
   z-index: 1000; }
 
 .chapter-btn { margin: 0 5px; }
+
+@media (max-width: 810px) {
+  .chapter-content .chapter-post-date {
+    font-size: 15px;
+  }
+  
+  .chapter-content .chapter-title {
+    font-size: 25px;
+  }
+  
+  .chapter-select-buttons .chapter-btn {
+    font-size: 17px;
+  }
+
+  .comments-list {
+    width: 70%;
+  }
+  
+  .comment {
+    margin-bottom: 1.2em;
+    padding: 0.8em;
+  }
+  
+  .comment-input {
+    margin-top: 1.1em;
+    width: 93%; /* Ensure the input section uses full width */
+  }
+  
+  .comment-input textarea {
+    font-size: 1.1em;
+    margin-bottom: 1em;
+    min-height: 50px;
+  }
+  
+  .comment-header strong {
+    font-size: 1.1em;
+  }
+  
+  .comment-header span {
+    font-size: 1.1em;
+  }
+}
+
+@media (max-width: 710px) {
+  .chapter-content .chapter-post-date {
+    font-size: 13px;
+  }
+  
+  .chapter-content .chapter-title {
+    font-size: 21px;
+  }
+  
+  .chapter-select-buttons .chapter-btn {
+    font-size: 13px;
+  }
+
+  .comments-list {
+    width: 70%;
+  }
+  
+  .comment {
+    margin-bottom: 1.2em;
+    padding: 0.8em;
+  }
+  
+  .comment-input {
+    margin-top: 1.1em;
+    width: 95%; /* Ensure the input section uses full width */
+  }
+  
+  .comment-input textarea {
+    font-size: 1em;
+    margin-bottom: 1em;
+    min-height: 50px;
+  }
+  
+  .comment-header strong {
+    font-size: 1.2em;
+  }
+  
+  .comment-header span {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 610px) {
+  .chapter-content .chapter-post-date {
+    font-size: 11px;
+  }
+  
+  .chapter-content .chapter-title {
+    font-size: 18px;
+  }
+  
+  .chapter-select-buttons .chapter-btn {
+    font-size: 10px;
+  }
+
+  .comments-list {
+    width: 70%;
+  }
+  
+  .comment {
+    margin-bottom: 1.2em;
+    padding: 0.8em;
+  }
+  
+  .comment-input {
+    margin-top: 1em;
+    width: 90%; /* Ensure the input section uses full width */
+  }
+  
+  .comment-input textarea {
+    font-size: 1em;
+    margin-bottom: 1em;
+    min-height: 50px;
+  }
+  
+  .comment-header strong {
+    font-size: 1.1em;
+  }
+  
+  .comment-header span {
+    font-size: 1.1em;
+  }
+}
