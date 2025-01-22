@@ -55,7 +55,7 @@
 
     /* Responsive typography for tablet */
     body, p {
-        font-size: 10px; /* Giảm kích thước chữ một chút cho tablet */
+        font-size: 12px; /* Giảm kích thước chữ một chút cho tablet */
     }
 }
 
@@ -76,7 +76,7 @@
 
     /* Responsive typography for mobile */
     body, p {
-        font-size: 9px; /* Giảm thêm chữ cho di động để vừa màn hình */
+        font-size: 11px; /* Giảm thêm chữ cho di động để vừa màn hình */
     }
 }
 
