@@ -9,12 +9,13 @@ import DailyUpdates from '../../../components/User/ListReading.jsx';
 import HottestSection from '../../../components/User/HottestSection.jsx';
 import '../../../components/User/homepage.css';
 
+
 const HomePage = () => {
   const [accountStatus, setAccountStatus] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
-  useEffect(() => {
 
+  useEffect(() => {
     const checkUserStatus = async () => {
       const storedUserId = localStorage.getItem("accountId");
       if (!storedUserId) {

@@ -12,6 +12,10 @@ router.post("/login", async (req, res) => {
         // Tìm tài khoản bằng tên đăng nhập và mật khẩu
         const account = await accountModel.findOne({ username: username, password: password });
 
+        // const email = await userModel.findOne({email: email, accountaccount});
+
+        // const accountEmail = await accountModel.findOne()
+
         // Nếu không tìm thấy tài khoản, trả về lỗi
         if (!account) {
             return res.status(400).json({ message: "Invalid username or password" });
