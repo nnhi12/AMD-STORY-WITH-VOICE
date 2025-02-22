@@ -15,11 +15,13 @@ import UserInfo from './pages/User/UserInformation/UserInformationPage'
 import ForgotPassword from './pages/Main/ForgotPassword/ForgotPassword'
 import Payment from './pages/User/Payment/Payment'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
+import VoiceControl from './utils/useSpeechGuide';
 function App() {
   
   return (
     <div>
         <BrowserRouter>
+          <VoiceControl />
           <Routes>
             <Route path = '/register' element = {<SignUp />}> </Route>
             <Route path = '/login' element = {<LogIn />}> </Route>
