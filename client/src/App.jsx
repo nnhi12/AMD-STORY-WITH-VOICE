@@ -15,13 +15,12 @@ import UserInfo from './pages/User/UserInformation/UserInformationPage'
 import ForgotPassword from './pages/Main/ForgotPassword/ForgotPassword'
 import Payment from './pages/User/Payment/Payment'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
-import VoiceControl from './utils/useSpeechGuide';
+import VoiceControl from './utils/voiceControl';
 function App() {
   
   return (
     <div>
         <BrowserRouter>
-          <VoiceControl />
           <Routes>
             <Route path = '/register' element = {<SignUp />}> </Route>
             <Route path = '/login' element = {<LogIn />}> </Route>
@@ -39,6 +38,7 @@ function App() {
             <Route path = '/payment' element = {<Payment />}> </Route>
             <Route path = '/forgot-password' element = {<ForgotPassword />}> </Route>
           </Routes>
+          <VoiceControl />
         </BrowserRouter>
     </div>
   )

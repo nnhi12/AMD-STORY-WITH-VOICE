@@ -13,7 +13,7 @@ const readingRouter = require('./controllers/readingstorycontroller.js');
 const chapterRouter = require('./controllers/chaptercontroller.js');
 const readingprogressRouter = require('./controllers/readingprogresscontroller.js');
 const vipRouter = require('./controllers/vipcontroller.js');
-
+const storyVoiceRouter = require('./controllers/voicecontroller.js');
 const app = express();
 
 app.use(express.json());
@@ -44,6 +44,7 @@ app.use("/", readingprogressRouter);
 
 app.use("/", vipRouter);
 
+app.get('/',storyVoiceRouter);
 
 app.listen(3001, () => {
     console.log('Success!');

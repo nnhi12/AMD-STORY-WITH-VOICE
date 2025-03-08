@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import VoiceControlChapter from '../../../utils/storyChapterSpeech.js'; 
 import axios from 'axios';
 import './StoryInfo.css';
 
 const StoryInfo = () => {
   const { storyId } = useParams();
   const [story, setStory] = useState(null);
+  const [chapterList, setChapterList] = useState([]);
   const [canContinueReading, setCanContinueReading] = useState(false);
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate(); // Hook điều hướng trong React Router
@@ -26,6 +28,10 @@ const StoryInfo = () => {
       .catch(error => {
         console.error('Error fetching story:', error);
       });
+
+    axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
+      .then(response => setChapterList(response.data)) // Lưu danh sách chương
+      .catch(error => console.error("Error fetching chapters:", error));
 
     // Kiểm tra xem người dùng có thể tiếp tục đọc chương nào không
     if (userId) {
@@ -139,7 +145,9 @@ const StoryInfo = () => {
           </button>
         </div>
       </div>
+      <VoiceControlChapter chapters={chapterList} storyId={storyId} />
     </section>
+    
   );
 };
 

@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
 
-function VoiceControl() {
-  const navigate = useNavigate();
+const useSpeechRecognition = (onCommand) => {
   const [recognition, setRecognition] = useState(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -11,33 +9,25 @@ function VoiceControl() {
     if (!SpeechRecognition) return;
 
     const recog = new SpeechRecognition();
-    recog.lang = 'vi-VN';
+    recog.lang = "vi-VN";
     recog.continuous = true;
     recog.interimResults = false;
 
     recog.onresult = (event) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.trim();
-      console.log('Nghe được:', transcript);
-
-      if (transcript.includes('truyện hay nhất')) {
-        navigate('/tophot');
-      } else if (transcript.includes('thư viện')) {
-        navigate('/library');
-      } else if (transcript.includes('trang chủ')) {
-        navigate('/');
-      }
-
+      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+      console.log("Nghe được:", transcript);
+      if (onCommand) onCommand(transcript); // Gọi hàm xử lý lệnh
     };
 
     setRecognition(recog);
-  }, [navigate]);
+  }, [onCommand]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.ctrlKey && recognition && !isListening) {
         recognition.start();
         setIsListening(true);
-        console.log('🎤 Mic bật');
+        console.log("🎤 Mic bật");
       }
     };
 
@@ -45,20 +35,20 @@ function VoiceControl() {
       if (!event.ctrlKey && recognition && isListening) {
         recognition.stop();
         setIsListening(false);
-        console.log('🔇 Mic tắt');
+        console.log("🔇 Mic tắt");
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, [recognition, isListening]);
 
   return null;
-}
+};
 
-export default VoiceControl;
+export default useSpeechRecognition;

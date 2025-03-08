@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import VoiceControlChapter from '../../../utils/chapterVoiceControl.js';
 import axios from 'axios';
 import './viewchapter.css';
 import Header from '../../../layouts/header/User/header.jsx';
@@ -15,15 +16,15 @@ function ViewChapter() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [story, setStory] = useState(null);
   const [userId, setUserId] = useState(null);
-  //const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [paragraphs, setParagraphs] = useState([]);
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   const paragraphRefs = useRef([]);
   const location = useLocation();
   const rowCount = location.state?.rowCount || 0;
 
-  //const synth = window.speechSynthesis;
-  //let utteranceQueue = [];
+  const synth = window.speechSynthesis;
+  let utteranceQueue = [];
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("accountId");
@@ -53,6 +54,12 @@ function ViewChapter() {
         console.error('Error fetching story:', error);
       });
   }, [chapterId, storyId]);
+
+  
+  useEffect(() => {
+    console.log("chapterData đã cập nhật:", chapterData);
+  }, [chapterData]);
+
 
   useEffect(() => {
     if (rowCount && paragraphRefs.current[rowCount]) {
@@ -89,7 +96,7 @@ function ViewChapter() {
 
   const navigateToChapter = (chapterId) => {
     setCurrentParagraphIndex(0); // Đặt lại chỉ số đoạn văn
-    //setIsSpeaking(false); // Dừng phát giọng nói hiện tại
+    setIsSpeaking(false); // Dừng phát giọng nói hiện tại
     navigate(`/stories/${storyId}/chapters/${chapterId}`);
     window.scrollTo(0, 0);
 
@@ -101,39 +108,39 @@ function ViewChapter() {
     return isDisabled ? 'chapter-btn-disabled' : 'chapter-btn-primary';
   };
 
-  // const handleReadChapter = () => {
-  //   if (!paragraphs.length) return;
+  const handleReadChapter = () => {
+    if (!paragraphs.length) return;
 
-  //   utteranceQueue = paragraphs.slice(currentParagraphIndex).map((text, index) => {
-  //     const utterance = new SpeechSynthesisUtterance(text);
-  //     utterance.lang = 'vi-VN';
-  //     utterance.onboundary = (event) => {
-  //       if (event.charIndex === 0) {
-  //         const element = paragraphRefs.current[currentParagraphIndex + index];
-  //         if (element) {
-  //           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  //         }
-  //         setCurrentParagraphIndex(currentParagraphIndex + index);
+    utteranceQueue = paragraphs.slice(currentParagraphIndex).map((text, index) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'vi-VN';
+      utterance.onboundary = (event) => {
+        if (event.charIndex === 0) {
+          const element = paragraphRefs.current[currentParagraphIndex + index];
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setCurrentParagraphIndex(currentParagraphIndex + index);
 
-  //         // Cập nhật tiến trình đọc khi người dùng đọc
-  //         updateReadingProgress(chapterId, currentParagraphIndex + index + 1); // Cập nhật countRow
-  //       }
-  //     };
-  //     return utterance;
-  //   });
+          // Cập nhật tiến trình đọc khi người dùng đọc
+          updateReadingProgress(chapterId, currentParagraphIndex + index + 1); // Cập nhật countRow
+        }
+      };
+      return utterance;
+    });
 
-  //   utteranceQueue.forEach(utterance => synth.speak(utterance));
-  //   setIsSpeaking(true);
-  // };
+    utteranceQueue.forEach(utterance => synth.speak(utterance));
+    setIsSpeaking(true);
+  };
 
-  // const handleStopReading = () => {
-  //   synth.cancel();
-  //   setIsSpeaking(false);
-  // };
+  const handleStopReading = () => {
+    synth.cancel();
+    setIsSpeaking(false);
+  };
 
-  // const handleContinueReading = () => {
-  //   handleReadChapter();
-  // };
+  const handleContinueReading = () => {
+    handleReadChapter();
+  };
 
   const { chapter, previousId, nextId } = chapterData;
 
@@ -175,7 +182,7 @@ function ViewChapter() {
         {story && <h1 className="chapter-title">{story.name}</h1>}
         {chapter && <h2 className="chapter-now">{chapter.name}</h2>}
 
-        {/* <div className="audio-buttons">
+        <div className="audio-buttons">
           <button
             className={`chapter-btn chapter-btn-secondary ${isSpeaking ? 'fixed-audio-btn' : ''}`}
             onClick={isSpeaking ? handleStopReading : handleReadChapter}
@@ -190,7 +197,7 @@ function ViewChapter() {
               Nghe tiếp
             </button>
           )}
-        </div> */}
+        </div>
       </div>
       <div className="chapter-select-buttons">
         <button
@@ -285,6 +292,17 @@ function ViewChapter() {
       </div>
       <Comment />
       <Footer />
+      <VoiceControlChapter
+        chapters={chapters}
+        nextId={chapterData.nextId}
+        previousId={chapterData.previousId}
+        storyId={storyId}
+        onRead={handleReadChapter}
+        onStop={handleStopReading}
+        onContinue={handleContinueReading}
+        navigateToChapter={handleReadChapter}
+      />
+
     </div>
   );
 }
