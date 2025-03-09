@@ -21,6 +21,7 @@ function ViewChapter() {
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   const paragraphRefs = useRef([]);
   const location = useLocation();
+  const [isDataReady, setIsDataReady] = useState(false);
   const rowCount = location.state?.rowCount || 0;
 
   const synth = window.speechSynthesis;
@@ -36,11 +37,13 @@ function ViewChapter() {
   }, [chapterId]);
 
   useEffect(() => {
+    setIsDataReady(false);
     axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}`)
       .then(response => {
         setChapterData(response.data);
         const content = response.data.chapter?.content || '';
         setParagraphs(content.split('\n').filter(p => p.trim()));
+        setIsDataReady(true);
       })
       .catch(error => {
         console.error('Error fetching chapter:', error);
@@ -99,8 +102,6 @@ function ViewChapter() {
     setIsSpeaking(false); // Dừng phát giọng nói hiện tại
     navigate(`/stories/${storyId}/chapters/${chapterId}`);
     window.scrollTo(0, 0);
-
-    // Cập nhật tiến trình đọc
     updateReadingProgress(chapterId, 0); // Bắt đầu từ đầu (0 hàng đã đọc)
   };
 
@@ -109,8 +110,10 @@ function ViewChapter() {
   };
 
   const handleReadChapter = () => {
+    console.log("chapterId hiện tại:", chapterId);
+  console.log("paragraphs trước khi đọc:", paragraphs);
+  console.log("currentParagraphIndex:", currentParagraphIndex);
     if (!paragraphs.length) return;
-
     utteranceQueue = paragraphs.slice(currentParagraphIndex).map((text, index) => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'vi-VN';
@@ -294,13 +297,14 @@ function ViewChapter() {
       <Footer />
       <VoiceControlChapter
         chapters={chapters}
+        chapter = {chapterData.chapter}
         nextId={chapterData.nextId}
         previousId={chapterData.previousId}
         storyId={storyId}
+        paragraphs = {paragraphs}
         onRead={handleReadChapter}
         onStop={handleStopReading}
         onContinue={handleContinueReading}
-        navigateToChapter={handleReadChapter}
       />
 
     </div>

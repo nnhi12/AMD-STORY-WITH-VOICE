@@ -1,26 +1,19 @@
 import { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const VoiceControlChapter = ({ chapters, storyId, onRead, onStop, onContinue, nextId, previousId , navigateToChapter}) => {
+const VoiceControlChapter = ({ chapters, storyId, onRead, onStop, onContinue, nextId, previousId, isDataReady }) => {
   const navigate = useNavigate();
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const processingRef = useRef(false);
 
-  // Lưu trữ giá trị mới nhất của nextId và previousId bằng useRef
   const nextIdRef = useRef(nextId);
   const previousIdRef = useRef(previousId);
-  const onContinueRef = useRef(onContinue);
-  const onReadRef = useRef(onRead);
-  const onStopRef = useRef(onStop);
 
-  // Cập nhật ref mỗi khi props thay đổi
   useEffect(() => {
     nextIdRef.current = nextId;
     previousIdRef.current = previousId;
-    onContinueRef.current = onContinue;
-    onReadRef.current = onRead;
-    onStopRef.current = onStop;
     console.log("Props cập nhật - previousId:", previousId, "nextId:", nextId);
   }, [nextId, previousId]);
 
@@ -41,36 +34,45 @@ const VoiceControlChapter = ({ chapters, storyId, onRead, onStop, onContinue, ne
         console.log("Nghe được:", transcript);
         console.log("previousId hiện tại:", previousIdRef.current);
         console.log("nextId hiện tại:", nextIdRef.current);
+        console.log("isDataReady trong VoiceControlChapter:", isDataReady);
 
         if (processingRef.current) return;
         processingRef.current = true;
         setTimeout(() => (processingRef.current = false), 1000);
 
-        if (transcript.includes("tập") && previousIdRef.current) {
+        if (transcript.includes("nghe truyện")) {
+          if (!isDataReady) {
+            console.warn("Dữ liệu chưa sẵn sàng trong VoiceControlChapter");
+            return;
+          }
+          console.log("Bắt đầu nghe truyện...");
+          onRead();
+        } else if (transcript.includes("dừng nghe")) {
+          console.log("Dừng nghe truyện...");
+          onStop();
+        } else if (transcript.includes("nghe tiếp")) {
+          console.log("Tiếp tục nghe truyện...");
+          onContinue();
+        } else if (transcript.includes("tập") && previousIdRef.current) {
           console.log("Điều hướng đến chương trước:", previousIdRef.current);
-          navigateToChapter(previousIdRef.current);
+          navigate(`/stories/${storyId}/chapters/${previousIdRef.current}`);
+          window.scrollTo(0, 0);
         } else if (transcript.includes("tiếp theo") && nextIdRef.current) {
           console.log("Điều hướng đến chương tiếp theo:", nextIdRef.current);
-          navigateToChapter(nextIdRef.current);
-        } else if (transcript.includes("nghe truyện")) {
-          onReadRef.current();
-        } else if (transcript.includes("dừng nghe")) {
-          onStopRef.current();
-        } else if (transcript.includes("nghe tiếp")) {
-          console.log("Gọi onContinue với lastReadingIndex:");
-          onContinueRef.current();
+          navigate(`/stories/${storyId}/chapters/${nextIdRef.current}`);
+          window.scrollTo(0, 0);
         } else {
-          chapters.forEach(chap => {
-            if (transcript.includes(chap.name.toLowerCase())) {
-              navigate(`/stories/${storyId}/chapters/${chap.id}`);
-            }
-          });
+          const matchedChapter = chapters.find(chap => transcript.includes(chap.name.toLowerCase()));
+          if (matchedChapter) {
+            console.log("Điều hướng đến chương:", matchedChapter._id);
+            navigate(`/stories/${storyId}/chapters/${matchedChapter._id}`);
+          }
         }
       };
 
       recognitionRef.current = recognition;
     }
-  }, [chapters, storyId, navigate, onRead, onStop, onContinue]);
+  }, [chapters, storyId, navigate, onRead, onStop, onContinue, isDataReady]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
