@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Book from './book';
+import { API_URL } from "../../env.js";
 
 const ListHost = ({ showChapters }) => {
     const [books, setBooks] = useState([]);
@@ -12,7 +13,7 @@ const ListHost = ({ showChapters }) => {
 
     useEffect(() => {
         // Fetch data from the API
-        axios.get("http://localhost:3001/stories")
+        axios.get(`{API_URL}/stories`)
             .then(response => {
                 console.log('Fetched books:', response.data);
                 // Sort by views in descending order and take only the top 6

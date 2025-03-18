@@ -3,6 +3,7 @@ import Swal from 'sweetalert2'; // Thêm SweetAlert2 vào
 import './book.css';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from "../../env.js";
 
 class Book extends Component {
   constructor(props) {
@@ -34,7 +35,7 @@ class Book extends Component {
       }).then((result) => {
         if (result.isConfirmed) {
           axios
-            .post('http://localhost:3001/remove-from-reading-list', {
+            .post(`${API_URL}/remove-from-reading-list`, {
               accountId: userId,
               storyId: data._id,
             })

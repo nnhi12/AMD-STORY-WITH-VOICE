@@ -8,6 +8,7 @@ import Banner from './Banner';
 import DailyUpdates from '../../../components/User/ListReading.jsx';
 import HottestSection from '../../../components/User/HottestSection.jsx';
 import '../../../components/User/homepage.css';
+import { API_URL } from "../../../env.js";
 
 
 const HomePage = () => {
@@ -25,7 +26,7 @@ const HomePage = () => {
       }
 
       try {
-        const response = await axios.post('http://localhost:3001/check-status', {
+        const response = await axios.post(`${API_URL}/check-status`, {
           accountId: storedUserId,
         });
 

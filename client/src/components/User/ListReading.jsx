@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Book from './book';
 import { useLocation } from 'react-router-dom';
+import { API_URL } from "../../env.js";
 
 const ListReading = ({ showChapters }) => {
     const [books, setBooks] = useState([]);
@@ -17,7 +18,7 @@ const ListReading = ({ showChapters }) => {
         const minChapters = queryParams.get('minChapters');
         const maxChapters = queryParams.get('maxChapters');
         // Sử dụng axios để fetch dữ liệu từ API
-        let apiUrl = "http://localhost:3001/stories";
+        let apiUrl = `${API_URL}/stories`;
         if (minChapters || maxChapters) {
             apiUrl += `?minChapters=${minChapters || ''}&maxChapters=${maxChapters || ''}`;
         }

@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import './book.css';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from "../../env";
 
 class Book extends Component {
   constructor(props) {
@@ -53,7 +54,7 @@ class Book extends Component {
       console.log(`Add to following list: ${data.name}`);
 
       axios
-        .post('http://localhost:3001/add-to-follow-list', {
+        .post(`${API_URL}/add-to-follow-list`, {
           accountId: userId,
           storyId: data._id,
         })
@@ -80,7 +81,7 @@ class Book extends Component {
       console.log(`Add to reading list: ${data.name}`);
 
       axios
-        .post('http://localhost:3001/add-to-reading-list', {
+        .post(`${API_URL}/add-to-reading-list`, {
           accountId: userId,
           storyId: data._id,
         })

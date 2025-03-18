@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import axios from 'axios';
 
+import { API_URL } from "../../../env.js";
+
 const Header = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [username, setUsername] = useState("");
@@ -22,7 +24,7 @@ const Header = ({ onSearch }) => {
       onSearch(searchTerm);
     }
     try {
-      const response = await axios.get(`http://localhost:3001/searchstory?name=${searchTerm}`);
+      const response = await axios.get(`${API_URL}/searchstory?name=${searchTerm}`);
       const results = response.data;
       console.log('Search Results:', results);
 

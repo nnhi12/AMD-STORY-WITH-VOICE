@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './ForgotPassword.css';
+import { API_URL } from "../../../env.js";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:3001/reset-password", { email, newPassword });
+      const response = await axios.post(`${API_URL}/reset-password`, { email, newPassword });
       setMessage(response.data.message || "Mật khẩu của bạn đã được thay đổi thành công!");
 
       // Chờ 3 giây trước khi chuyển hướng

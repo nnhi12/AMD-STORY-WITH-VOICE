@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom'
 import './Login.css';
 import { Link } from 'react-router-dom';
+import { API_URL } from "../../../env.js";
 
 function Login() {
   const history = useNavigate();
@@ -24,7 +25,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3001/login", createForm);
+      const response = await axios.post(`${API_URL}/login`, createForm);
       const { account, user } = response.data; // Lấy thông tin tài khoản và người dùng
 
       if (account) {

@@ -3,6 +3,7 @@ import Swal from 'sweetalert2'; // Thêm SweetAlert2 vào
 import './book.css';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from "../../env.js";
 
 class Book extends Component {
   constructor(props) {
@@ -36,7 +37,7 @@ class Book extends Component {
         if (result.isConfirmed) {
           // Nếu người dùng nhấn Yes, tiếp tục xóa
           axios
-            .post('http://localhost:3001/remove-from-follow-list', {
+            .post(`${API_URL}/remove-from-follow-list`, {
               accountId: userId,
               storyId: data._id,
             })

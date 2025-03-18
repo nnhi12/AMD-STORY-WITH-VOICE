@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Book from './bookfav';
+import { API_URL } from "../../env.js";
 
 const ListFavourite = ({ userId, showChapters }) => {
   const [books, setBooks] = useState([]);
 
   useEffect(() => {
     if (userId) {
-      axios.get(`http://localhost:3001/users/${userId}/followingstories`)
+      axios.get(`${API_URL}/users/${userId}/followingstories`)
         .then(response => {
           setBooks(response.data);
         })

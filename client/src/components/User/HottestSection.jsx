@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import './HottestSection.css';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from "../../env.js";
 
 const HottestSection = () => {
   const [hottestBooks, setHottestBooks] = useState([]);
 
   useEffect(() => {
     // Fetch data from the API
-    axios.get("http://localhost:3001/stories")
+    axios.get(`${API_URL}/stories`)
       .then(response => {
         console.log('Fetched books:', response.data);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './UserInfo.css';
+import { API_URL } from "../../../env.js";
 
 function UserInfo() {
     const [userInfo, setUserInfo] = useState({
@@ -19,7 +20,7 @@ function UserInfo() {
         const fetchUserInfo = async () => {
             try {
                 const accountId = localStorage.getItem("accountId"); // Giả sử account ID được lưu trong localStorage
-                const response = await axios.get(`http://localhost:3001/userinfo/${accountId}`);
+                const response = await axios.get(`${API_URL}/userinfo/${accountId}`);
                 setUserInfo(response.data);
             } catch (error) {
                 console.error("Lỗi khi lấy thông tin người dùng:", error);
@@ -49,7 +50,7 @@ function UserInfo() {
                 formData.append("image", file); // Đính kèm file nếu có
             }
     
-            await axios.put(`http://localhost:3001/userinfo/${accountId}`, formData, {
+            await axios.put(`${API_URL}/userinfo/${accountId}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

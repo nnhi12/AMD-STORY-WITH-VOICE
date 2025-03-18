@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import VoiceControlChapter from '../../../utils/storyChapterSpeech.js'; 
 import axios from 'axios';
 import './StoryInfo.css';
+import { API_URL } from "../../../env.js";
 
 const StoryInfo = () => {
   const { storyId } = useParams();
@@ -20,7 +21,7 @@ const StoryInfo = () => {
 
   useEffect(() => {
     // Lấy thông tin câu chuyện
-    axios.get(`http://localhost:3001/stories/${storyId}`)
+    axios.get(`${API_URL}/stories/${storyId}`)
       .then(response => {
         setStory(response.data);
         console.log(response.data);
@@ -29,13 +30,13 @@ const StoryInfo = () => {
         console.error('Error fetching story:', error);
       });
 
-    axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
+    axios.get(`${API_URL}/stories/${storyId}/chapters`)
       .then(response => setChapterList(response.data)) // Lưu danh sách chương
       .catch(error => console.error("Error fetching chapters:", error));
 
     // Kiểm tra xem người dùng có thể tiếp tục đọc chương nào không
     if (userId) {
-      axios.get(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`)
+      axios.get(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`)
         .then(response => {
           setCanContinueReading(!!response.data.chapter); // Kiểm tra xem có chapter nào hay không
           console.log(response.data.chapter);
@@ -50,7 +51,7 @@ const StoryInfo = () => {
   }
 
   const handleReadFromStart = () => {
-    axios.get(`http://localhost:3001/stories/${storyId}/first?accountId=${userId || ''}`)
+    axios.get(`${API_URL}/stories/${storyId}/first?accountId=${userId || ''}`)
     .then(response => {
       if (response.data) {
         const { firstChapter, enableChapter } = response.data;
@@ -67,7 +68,7 @@ const StoryInfo = () => {
   };
 
   const handleReadLatest = () => {
-    axios.get(`http://localhost:3001/stories/${storyId}/latest?accountId=${userId || ''}`)
+    axios.get(`${API_URL}/stories/${storyId}/latest?accountId=${userId || ''}`)
     .then(response => {
       if (response.data) {
         const { latestChapter, enableChapter } = response.data;
@@ -85,7 +86,7 @@ const StoryInfo = () => {
 
   const handleContinueReading = () => {
     if (userId && storyId) {
-      axios.get(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`)
+      axios.get(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`)
         .then(response => {
           const {chapter} = response.data;
           const count_row = response.data.count_row;

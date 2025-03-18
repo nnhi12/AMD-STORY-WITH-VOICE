@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Book from './bookinlib';
+import { API_URL } from "../../env.js";
 
 const ListReading = ({ userId, showChapters }) => {
   const [books, setBooks] = useState([]);
@@ -9,7 +10,7 @@ const ListReading = ({ userId, showChapters }) => {
   useEffect(() => {
     if (userId) {
       // Lấy danh sách truyện
-      axios.get(`http://localhost:3001/users/${userId}/readingstories`)
+      axios.get(`${API_URL}/users/${userId}/readingstories`)
         .then(response => {
           setBooks(response.data);
         })
@@ -18,7 +19,7 @@ const ListReading = ({ userId, showChapters }) => {
         });
 
       // Lấy danh sách progress
-      axios.get(`http://localhost:3001/users/${userId}/get-reading-progress`)
+      axios.get(`${API_URL}/users/${userId}/get-reading-progress`)
         .then(response => {
           setProgressList(response.data); // Lưu danh sách progress vào state
         })

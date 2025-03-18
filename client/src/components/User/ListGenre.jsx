@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './ListGenre.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from "../../env.js";
 
 const ListGenre = () => {
     const [genres, setGenres] = useState([]);
@@ -9,7 +10,7 @@ const ListGenre = () => {
 
     useEffect(() => {
         // Fetch categories from the API
-        axios.get("http://localhost:3001/categories")
+        axios.get(`${API_URL}/categories`)
             .then(response => {
                 setGenres(response.data); // Set categories from API response
             })
