@@ -13,7 +13,7 @@ const ListHost = ({ showChapters }) => {
 
     useEffect(() => {
         // Fetch data from the API
-        axios.get(`{API_URL}/stories`)
+        axios.get(`${API_URL}/stories`)
             .then(response => {
                 console.log('Fetched books:', response.data);
                 // Sort by views in descending order and take only the top 6
