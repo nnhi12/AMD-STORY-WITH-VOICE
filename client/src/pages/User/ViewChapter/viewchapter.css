@@ -245,6 +245,17 @@
 
 .chapter-btn { margin: 0 5px; }
 
+.voice-control-status {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: #28a745;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  z-index: 1000;
+}
+
 @media (max-width: 810px) {
   .chapter-content .chapter-post-date {
     font-size: 15px;

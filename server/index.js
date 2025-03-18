@@ -17,7 +17,13 @@ const storyVoiceRouter = require('./controllers/voicecontroller.js');
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+//app.use(cors());
+app.use(cors({
+    origin: '*',  // Hoặc thay bằng địa chỉ frontend nếu cần
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
+  
 const upload = multer();
 
 connectDB();
@@ -46,6 +52,6 @@ app.use("/", vipRouter);
 
 app.get('/',storyVoiceRouter);
 
-app.listen(3001, () => {
+app.listen(3001, '0.0.0.0', () => {
     console.log('Success!');
 })

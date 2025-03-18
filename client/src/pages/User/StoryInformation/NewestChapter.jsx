@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import './NewestChapter.css';
+import { API_URL } from "../../../env.js";
 
 const NewestChapter = () => {
   const { storyId } = useParams();
@@ -17,7 +18,7 @@ const NewestChapter = () => {
   // Lấy trạng thái tài khoản của người dùng
   useEffect(() => {
     if (userId) {
-      axios.get(`http://localhost:3001/account-status?accountId=${userId}`)
+      axios.get(`${API_URL}/account-status?accountId=${userId}`)
         .then(response => {
           setStatus(response.data.status); // Gán trạng thái tài khoản (VIP hay không)
         })
@@ -28,7 +29,7 @@ const NewestChapter = () => {
   }, [userId]);
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
+    axios.get(`${API_URL}/stories/${storyId}/chapters`)
       .then(response => {
         const sortedChapters = response.data
           .sort((a, b) => new Date(b.posted_at) - new Date(a.posted_at)) // Sort by newest first

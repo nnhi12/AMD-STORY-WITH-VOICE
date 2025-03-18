@@ -4,6 +4,8 @@ import { useParams } from 'react-router-dom';
 import Swal from 'sweetalert2'; // Import sweetalert2
 import './ChapterList.css';
 
+import { API_URL } from "../../../env.js";
+
 const ChapterList = () => {
   const { storyId } = useParams();
   const [chapters, setChapters] = useState([]);
@@ -18,7 +20,7 @@ const ChapterList = () => {
 
   // Lấy danh sách chapters
   useEffect(() => {
-    axios.get(`http://localhost:3001/stories/${storyId}/chapters`)
+    axios.get(`${API_URL}/stories/${storyId}/chapters`)
       .then(response => {
         setChapters(response.data);
       })
@@ -30,7 +32,7 @@ const ChapterList = () => {
   // Lấy trạng thái tài khoản của người dùng
   useEffect(() => {
     if (userId) {
-      axios.get(`http://localhost:3001/account-status?accountId=${userId}`)
+      axios.get(`${API_URL}/account-status?accountId=${userId}`)
         .then(response => {
           setStatus(response.data.status); // Gán trạng thái tài khoản (VIP hay không)
         })

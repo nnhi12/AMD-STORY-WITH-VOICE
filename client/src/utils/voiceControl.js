@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from "../env";
 
 function VoiceControl() {
   const navigate = useNavigate();
@@ -18,19 +19,22 @@ function VoiceControl() {
       recog.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.trim();
         console.log('Nghe được:', transcript);
-
+      
         if (transcript.includes('truyện hay nhất')) {
           navigate('/tophot');
         } else if (transcript.includes('thư viện')) {
           navigate('/library');
         } else if (transcript.includes('trang chủ')) {
           navigate('/');
+        } else if (transcript.toLowerCase().startsWith('tìm ')) {
+          const storyName = transcript.substring(4).trim(); // Cắt bỏ "tìm " (4 ký tự)
+          if (storyName) { // Kiểm tra xem còn nội dung sau "tìm " không
+            fetchStoryIdByName(storyName);
+          } else {
+            console.log("Vui lòng cung cấp tên truyện sau từ 'tìm'");
+          }
         } else {
-          const storyName = transcript.toLowerCase().startsWith('truyện ')
-            ? transcript.substring(7).trim()
-            : transcript;
-
-          fetchStoryIdByName(storyName);
+          console.log("Vui lòng nói 'tìm' theo sau là tên truyện để tìm kiếm.");
         }
       };
 
@@ -40,7 +44,7 @@ function VoiceControl() {
 
   const fetchStoryIdByName = async (storyName) => {
     try {
-      const response = await fetch(`http://localhost:3001/searchstory?name=${encodeURIComponent(storyName)}`);
+      const response = await fetch(`${API_URL}/searchstory?name=${encodeURIComponent(storyName)}`);
       if (!response.ok) {
         console.log("Không tìm thấy truyện:", storyName);
         navigate('/searchresult', { state: { searchResults: [] } });

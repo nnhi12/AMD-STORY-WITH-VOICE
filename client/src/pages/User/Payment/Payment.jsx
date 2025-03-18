@@ -6,6 +6,7 @@ import "./Payment.css";
 import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
+import { API_URL } from "../../../env.js";
 
 const PaymentPage = () => {
     const [sdkReady, setSdkReady] = useState(false);
@@ -22,7 +23,7 @@ const PaymentPage = () => {
     useEffect(() => {
         console.log("userId đã được set:", userId);
         if (userId) { // Chỉ gọi API nếu userId không phải null
-            axios.get(`http://localhost:3001/account-status?accountId=${userId}`)
+            axios.get(`${API_URL}/account-status?accountId=${userId}`)
                 .then(response => {
                     setOldStatus(response.data.status); // Gán trạng thái cũ
                 })
@@ -51,7 +52,7 @@ const PaymentPage = () => {
     const onSuccessPaypal = async (details, data) => {
         console.log('Thanh toán thành công:', details, data);
         try {
-            const response = await axios.post('http://localhost:3001/update-status', { accountId: userId });
+            const response = await axios.post(`${API_URL}/update-status`, { accountId: userId });
             console.log(response.data);
 
             Swal.fire({

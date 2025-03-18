@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams} from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from "../../../env.js";
 
 const CommentSection = () => {
     const { chapterId, storyId } = useParams();
@@ -12,7 +13,7 @@ const CommentSection = () => {
         setUserId(storedUserId);
     }, []);
     useEffect(() => {
-        axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`)
+        axios.get(`${API_URL}/stories/${storyId}/chapters/${chapterId}/comments`)
             .then(response => {
                 if (response.data && Array.isArray(response.data.comments)) {
                     setComments(response.data.comments);
@@ -29,13 +30,13 @@ const CommentSection = () => {
             // Nếu không có nội dung bình luận, không làm gì
             return;
         }
-        axios.post(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`, {
+        axios.post(`${API_URL}/stories/${storyId}/chapters/${chapterId}/comments`, {
           content: newComment,
           accountId: userId,
         })
           .then(() => {
             // Sau khi đăng bình luận thành công, lấy lại danh sách bình luận mới
-            axios.get(`http://localhost:3001/stories/${storyId}/chapters/${chapterId}/comments`)
+            axios.get(`${API_URL}/stories/${storyId}/chapters/${chapterId}/comments`)
               .then(response => {
                 if (response.data && Array.isArray(response.data.comments)) {
                   setComments(response.data.comments);  // Cập nhật danh sách bình luận mới

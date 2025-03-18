@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Book from './book';
+import { API_URL } from "../../env.js";
 
 const ListReading = ({ showChapters }) => {
   const { categoryId } = useParams();
   const [stories, setStories] = useState([]);
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/categories/${categoryId}/stories`)
+    axios.get(`${API_URL}/categories/${categoryId}/stories`)
       .then(response => {
         setStories(response.data);
       })

@@ -24,7 +24,7 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
         let transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
         console.log("Nghe được:", transcript);
 
-        if (transcript.includes("đọc từ đầu")) {
+        if (transcript.includes("đọc từ")) {
             handleReadFromStart();
         } else if (transcript.includes("chương mới nhất")) {
           handleReadLatest();

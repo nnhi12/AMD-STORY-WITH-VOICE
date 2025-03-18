@@ -3,6 +3,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import {useNavigate } from 'react-router-dom';
 import './navbar.css';
+import { API_URL } from "../../env.js";
 
 const Navbar = () => {
   const [categories, setCategories] = useState([]);
@@ -11,7 +12,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/categories');
+        const response = await axios.get(`${API_URL}/categories`);
         setCategories(response.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
