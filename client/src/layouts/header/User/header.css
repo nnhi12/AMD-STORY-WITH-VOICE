@@ -197,3 +197,34 @@
     padding: 9px 7px;
   }
 }
+
+@media (max-width: 500px) {
+  .u-logo img {
+    height: 20px;
+    margin-left: -20px;
+    margin-right: 7px
+  }
+
+  .u-search-bar {
+    width: 40%; /* Chiếm toàn bộ chiều rộng */
+    margin-bottom: 10px;
+    margin-right: 7px;
+  }
+
+  .u-search-bar img {
+    width: 20px;
+    height: 20px;
+    margin-left: -40px;
+  }
+
+  .u-nav-links a {
+    font-size: 8.5px;
+    margin-right: 7px;
+    margin-left: 7px; /* Giảm kích thước font cho điều hướng */
+  }
+
+  .abc-button {
+    font-size: 9px;
+    padding: 10px 9px;
+  }
+}
