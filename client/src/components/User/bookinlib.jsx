@@ -107,19 +107,19 @@ class Book extends Component {
         )}
 
         {/* Thanh tiến trình */}
-        <div className="progress mt-2" style={{ height: '8px' }}>
-          <div
-            className="progress-bar"
-            role="progressbar"
-            style={{
-              width: `${progressValue}%`,
-              backgroundColor: progressValue > 0 ? '#007bff' : '#e0e0e0',
-            }}
-            aria-valuenow={progressValue}
-            aria-valuemin="0"
-            aria-valuemax="100"
-          ></div>
-        </div>
+          <div className="progress mt-2">
+              <div
+                  className="progress-bar"
+                  role="progressbar"
+                  style={{
+                      width: `${progressValue}%`,
+                      backgroundColor: progressValue > 0 ? '#007bff' : '#e0e0e0',
+                  }}
+                  aria-valuenow={progressValue}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+              ></div>
+          </div>
 
         {isContextMenuOpen && (
           <div 

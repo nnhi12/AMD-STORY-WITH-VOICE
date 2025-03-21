@@ -7,13 +7,20 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
 
+  // 🗣️ Hàm đọc phản hồi
+  const speak = (text) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "vi-VN";
+    speechSynthesis.speak(utterance);
+  };
+
   useEffect(() => {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
       console.log("Trình duyệt không hỗ trợ Web Speech API");
+      speak("Trình duyệt của bạn không hỗ trợ nhận diện giọng nói.");
       return;
     }
 
-    // Chỉ khởi tạo Recognition MỘT LẦN
     if (!recognitionRef.current) {
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = "vi-VN";
@@ -23,50 +30,68 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
       recognition.onresult = (event) => {
         let transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
         console.log("Nghe được:", transcript);
+        speak(`Bạn vừa nói: ${transcript}`);
+
+        let found = false;
 
         if (transcript.includes("đọc từ")) {
-            handleReadFromStart();
+          speak("Đang mở chương đầu tiên...");
+          handleReadFromStart();
+          found = true;
         } else if (transcript.includes("chương mới nhất")) {
+          speak("Đang mở chương mới nhất...");
           handleReadLatest();
+          found = true;
         } else if (transcript.includes("đọc tiếp")) {
+          speak("Đang tiếp tục đọc...");
           handleContinueReading();
+          found = true;
         } else {
           chapters.forEach(chap => {
             if (transcript.includes(chap.name.toLowerCase())) {
+              speak(`Đang mở chương ${chap.name}`);
               navigate(`/stories/${storyId}/chapters/${chap.id}`);
+              found = true;
             }
           });
+        }
+
+        // ❗ Nếu không nhận diện được lệnh
+        if (!found) {
+          speak("Tôi không hiểu. Bạn có thể nói lại không?");
         }
       };
 
       recognitionRef.current = recognition;
     }
-  }, []); // ✅ Không có dependencies để tránh render lại
+  }, []);
 
   const handleContinueReading = () => {
     const userId = localStorage.getItem("accountId");
     if (userId && storyId) {
-        axios.get(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`)
-          .then(response => {
-            const {chapter} = response.data;
-            const count_row = response.data.count_row;
-            console.log(count_row); 
-  
-            // Kiểm tra xem chapter có phải là mảng hay đối tượng
-            if (Array.isArray(chapter) && chapter.length > 0) {
-              navigate(`/stories/${storyId}/chapters/${chapter[0]._id}`, {
-                state: { rowCount: count_row },
-              }); // Lấy chapter đầu tiên nếu là mảng
-            } else if (chapter && chapter._id) {
-              navigate(`/stories/${storyId}/chapters/${chapter._id}`, {
-                state: { rowCount: count_row },
-              });
-            } else {
-              console.error('No chapter found to continue reading.');
-            }
-          })
-          .catch(error => console.error('Error fetching reading chapter:', error));
-      }
+      axios.get(`http://localhost:3001/users/${userId}/stories/${storyId}/reading-chapter`)
+        .then(response => {
+          const { chapter } = response.data;
+          const count_row = response.data.count_row;
+          if (Array.isArray(chapter) && chapter.length > 0) {
+            speak(`Đang tiếp tục chương ${chapter[0].title}`);
+            navigate(`/stories/${storyId}/chapters/${chapter[0]._id}`, {
+              state: { rowCount: count_row },
+            });
+          } else if (chapter && chapter._id) {
+            speak(`Đang tiếp tục chương ${chapter.title}`);
+            navigate(`/stories/${storyId}/chapters/${chapter._id}`, {
+              state: { rowCount: count_row },
+            });
+          } else {
+            speak("Không tìm thấy chương đang đọc dở.");
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching reading chapter:', error);
+          speak("Lỗi khi lấy dữ liệu chương đang đọc.");
+        });
+    }
   };
 
   const handleReadFromStart = () => {
@@ -76,13 +101,17 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
         if (response.data) {
           const { firstChapter, enableChapter } = response.data;
           if (enableChapter) {
+            speak(`Đang mở chương đầu tiên: ${firstChapter.title}`);
             navigate(`/stories/${storyId}/chapters/${firstChapter._id}`);
           } else {
-            alert('Bạn cần VIP để đọc chương này.');
+            speak("Bạn cần VIP để đọc chương này.");
           }
         }
       })
-      .catch(error => console.error('Lỗi lấy chương đầu:', error));
+      .catch(error => {
+        console.error('Lỗi lấy chương đầu:', error);
+        speak("Lỗi khi lấy chương đầu tiên.");
+      });
   };
 
   const handleReadLatest = () => {
@@ -92,13 +121,17 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
         if (response.data) {
           const { latestChapter, enableChapter } = response.data;
           if (enableChapter) {
+            speak(`Đang mở chương mới nhất: ${latestChapter.title}`);
             navigate(`/stories/${storyId}/chapters/${latestChapter._id}`);
           } else {
-            alert('Bạn cần VIP để đọc chương này.');
+            speak("Bạn cần VIP để đọc chương này.");
           }
         }
       })
-      .catch(error => console.error('Lỗi lấy chương mới nhất:', error));
+      .catch(error => {
+        console.error('Lỗi lấy chương mới nhất:', error);
+        speak("Lỗi khi lấy chương mới nhất.");
+      });
   };
 
   useEffect(() => {
@@ -107,6 +140,7 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
         recognitionRef.current.start();
         setIsListening(true);
         console.log("🎤 Mic bật");
+        speak("Micro đã bật, hãy nói lệnh của bạn.");
       }
     };
 
@@ -115,6 +149,7 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
         recognitionRef.current.stop();
         setIsListening(false);
         console.log("🔇 Mic tắt");
+        speak("Micro đã tắt.");
       }
     };
 
@@ -125,7 +160,7 @@ const VoiceControlChapter = ({ chapters, storyId }) => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [isListening]); // ✅ Chỉ phụ thuộc vào `isListening`
+  }, [isListening]);
 
   return null;
 };

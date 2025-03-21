@@ -100,4 +100,18 @@
         font-size: 9px; /* Giảm thêm chữ cho di động để vừa màn hình */
     }
   }
+
+  @media (max-width: 500px) {
+    .second-section-container {
+        flex-direction: column; /* Chuyển thành cột để HottestSection xuống dưới */
+        align-items: center;
+    }
+
+    .first-section-container,
+    .second-section-container {
+        width: 100%; /* Chiếm toàn bộ chiều rộng */
+    }
+}
+
+
   
