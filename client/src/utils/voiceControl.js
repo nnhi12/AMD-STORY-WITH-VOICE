@@ -9,7 +9,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, isSpeaking, currentPa
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const isChapterPage = location.pathname.includes('/chapters');
-  const paragraph = JSON.parse(localStorage.getItem('chapter_paragraph'));
 
   const speak = (text, callback) => {
     const synth = window.speechSynthesis;
@@ -95,7 +94,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, isSpeaking, currentPa
             speak('Đang mở danh sách chương', toggleDropdown);
           } else if (transcript.includes('nghe truyện') && !isSpeaking) {
             console.log('Triggering handleReadChapter'); // Debug
-            speak('Đang bắt đầu nghe truyện', handleReadChapter(paragraph));
+            speak('Đang bắt đầu nghe truyện', handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))));
           } else if (transcript.includes('dừng nghe') && isSpeaking) {
             speak('Đang dừng nghe truyện', handleStopReading);
           } else if (transcript.includes('tiếp tục nghe') && !isSpeaking && currentParagraphIndex > 0) {
