@@ -7,7 +7,7 @@ import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
 import Comment from './CommentSection.jsx';
 import { API_URL } from "../../../env.js";
-import useVoiceControl from '../../../utils/voiceChapterControl.js'; // Import hook
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 function ViewChapter() {
   const { chapterId, storyId } = useParams();
@@ -20,27 +20,23 @@ function ViewChapter() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [paragraphs, setParagraphs] = useState([]);
   const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
   const paragraphRefs = useRef([]);
+  const commentSectionRef = useRef(null);
   const location = useLocation();
   const rowCount = location.state?.rowCount || 0;
 
   const synth = window.speechSynthesis;
   let utteranceQueue = [];
 
-  // Hàm phát âm thanh
   const speak = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
+    const voices = synth.getVoices();
     utterance.lang = "vi-VN";
-  
     const vietnameseVoice = voices.find(voice => voice.lang === "vi-VN");
-    if (vietnameseVoice) {
-      utterance.voice = vietnameseVoice;
-    } else {
-      console.warn("Không tìm thấy giọng tiếng Việt, sử dụng giọng mặc định.");
-    }
-  
-    speechSynthesis.speak(utterance);
+    if (vietnameseVoice) utterance.voice = vietnameseVoice;
+    synth.speak(utterance);
   };
 
   useEffect(() => {
@@ -48,8 +44,8 @@ function ViewChapter() {
     setUserId(storedUserId);
 
     axios.put(`${API_URL}/chapters/${chapterId}/increment-view`)
-      .then(response => { console.log('View count updated:', response.data); })
-      .catch(error => { console.error('Error incrementing view count:', error); });
+      .then(response => console.log('View count updated:', response.data))
+      .catch(error => console.error('Error incrementing view count:', error));
   }, [chapterId]);
 
   useEffect(() => {
@@ -58,19 +54,28 @@ function ViewChapter() {
         setChapterData(response.data);
         const content = response.data.chapter?.content || '';
         setParagraphs(content.split('\n').filter(p => p.trim()));
+        localStorage.setItem('chapter_paragraph', JSON.stringify(content.split('\n').filter(p => p.trim())));
       })
-      .catch(error => {
-        console.error('Error fetching chapter:', error);
-      });
+      .catch(error => console.error('Error fetching chapter:', error));
 
     axios.get(`${API_URL}/stories/${storyId}`)
-      .then(response => {
-        setStory(response.data);
-      })
-      .catch(error => {
-        console.error('Error fetching story:', error);
-      });
+      .then(response => setStory(response.data))
+      .catch(error => console.error('Error fetching story:', error));
+
+    axios.get(`${API_URL}/stories/${storyId}/chapters/${chapterId}/comments`)
+      .then(response => setComments(response.data.comments || []))
+      .catch(error => console.error('Error fetching comments:', error));
   }, [chapterId, storyId]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = synth.getVoices();
+      if (voices.length > 0) console.log('Voices loaded:', voices);
+    };
+    synth.addEventListener('voiceschanged', loadVoices);
+    loadVoices();
+    return () => synth.removeEventListener('voiceschanged', loadVoices);
+  }, []);
 
   useEffect(() => {
     if (rowCount && paragraphRefs.current[rowCount]) {
@@ -96,9 +101,7 @@ function ViewChapter() {
           setChapters(response.data);
           setIsDropdownOpen(true);
         })
-        .catch(error => {
-          console.error('Error fetching chapters:', error);
-        });
+        .catch(error => console.error('Error fetching chapters:', error));
     } else {
       setIsDropdownOpen(false);
     }
@@ -115,35 +118,42 @@ function ViewChapter() {
     return isDisabled ? 'chapter-btn-disabled' : 'chapter-btn-primary';
   };
 
-  const handleReadChapter = () => {
-  if (!paragraphs.length) return;
-
-  utteranceQueue = paragraphs.slice(currentParagraphIndex).map((text, index) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    utterance.lang = "vi-VN";
-
-    const vietnameseVoice = voices.find(voice => voice.lang === "vi-VN");
-    if (vietnameseVoice) {
-      utterance.voice = vietnameseVoice;
+  const handleReadChapter = (chapter_paragraph) => {
+    console.log('handleReadChapter called'); // Debug
+    if (!chapter_paragraph.length) {
+      console.log('No paragraphs to read');
+      speak('Không có đoạn văn để đọc');
+      return;
     }
-
-    utterance.onboundary = (event) => {
-      if (event.charIndex === 0) {
-        const element = paragraphRefs.current[currentParagraphIndex + index];
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    //let paragraphArray = "";
+    //const isString = (typeof chapter_paragraph) == "string" ;
+    //isString? paragraphArray = chapter_paragraph.split('\n').filter(p => p.trim()) : "";
+    console.log('Paragraphs:', chapter_paragraph, 'Current index:', currentParagraphIndex);
+    utteranceQueue = chapter_paragraph.slice(currentParagraphIndex).map((text, index) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = synth.getVoices();
+      utterance.lang = "vi-VN";
+      const vietnameseVoice = voices.find(voice => voice.lang === "vi-VN");
+      if (vietnameseVoice) utterance.voice = vietnameseVoice;
+      utterance.onboundary = (event) => {
+        if (event.charIndex === 0) {
+          const element = paragraphRefs.current[currentParagraphIndex + index];
+          if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setCurrentParagraphIndex(currentParagraphIndex + index);
+          updateReadingProgress(chapterId, currentParagraphIndex + index + 1);
         }
-        setCurrentParagraphIndex(currentParagraphIndex + index);
-        updateReadingProgress(chapterId, currentParagraphIndex + index + 1);
-      }
-    };
-    return utterance;
-  });
-
-  utteranceQueue.forEach(utterance => speechSynthesis.speak(utterance));
-  setIsSpeaking(true);
-};
+      };
+      utterance.onend = () => {
+        if (index === chapter_paragraph.length - currentParagraphIndex - 1) setIsSpeaking(false);
+      };
+      return utterance;
+    });
+    utteranceQueue.forEach((utterance, idx) => {
+      console.log(`Speaking paragraph ${currentParagraphIndex + idx}:`, utterance.text);
+      synth.speak(utterance);
+    });
+    setIsSpeaking(true);
+  };
 
   const handleStopReading = () => {
     synth.cancel();
@@ -154,7 +164,27 @@ function ViewChapter() {
     handleReadChapter();
   };
 
-  // Tích hợp useVoiceControl
+  const handleCommentSubmit = () => {
+    if (!commentText || commentText.trim() === '') {
+      console.log('Bình luận rỗng, không thể đăng');
+      speak('Bình luận rỗng, không thể đăng');
+      return;
+    }
+    console.log('Đang gửi bình luận:', commentText);
+    axios.post(`${API_URL}/stories/${storyId}/chapters/${chapterId}/comments`, {
+      content: commentText,
+      accountId: userId,
+    })
+      .then(() => {
+        console.log('Bình luận đã được gửi thành công');
+        setCommentText('');
+        axios.get(`${API_URL}/stories/${storyId}/chapters/${chapterId}/comments`)
+          .then(response => setComments(response.data.comments || []))
+          .catch(error => console.error('Error fetching comments:', error));
+      })
+      .catch(error => console.error('Lỗi khi đăng bình luận:', error));
+  };
+
   const callbacks = {
     toggleDropdown,
     navigateToChapter,
@@ -162,11 +192,21 @@ function ViewChapter() {
     handleStopReading,
     handleContinueReading,
     speak,
+    scrollToComment: () => commentSectionRef.current?.scrollToInput(),
+    setCommentText,
+    handleCommentSubmit,
   };
 
-  const { isListening } = useVoiceControl(chapterData, isSpeaking, currentParagraphIndex, callbacks);
+  // Sửa cách gọi useVoiceControl
+  const { isListening = false } = useVoiceControl({
+    chapters, // Danh sách chương từ API
+    storyId,
+    chapterData,
+    isSpeaking,
+    currentParagraphIndex,
+    callbacks,
+  }) || {};
 
-  // Theo dõi sự kiện cuộn để cập nhật tiến trình đọc
   useEffect(() => {
     const handleScroll = () => {
       const visibleParagraphIndex = paragraphRefs.current.findIndex((ref, index) => {
@@ -174,18 +214,13 @@ function ViewChapter() {
         const rect = ref.getBoundingClientRect();
         return rect.top >= 0 && rect.top <= window.innerHeight;
       });
-
       if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
         setCurrentParagraphIndex(visibleParagraphIndex);
         updateReadingProgress(chapterId, visibleParagraphIndex + 1);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [currentParagraphIndex, chapterId]);
 
   if (!chapterData.chapter) {
@@ -204,11 +239,10 @@ function ViewChapter() {
         </p>
         {story && <h1 className="chapter-title">{story.name}</h1>}
         {chapter && <h2 className="chapter-now">{chapter.name}</h2>}
-
         <div className="audio-buttons">
           <button
             className={`chapter-btn chapter-btn-secondary ${isSpeaking ? 'fixed-audio-btn' : ''}`}
-            onClick={isSpeaking ? handleStopReading : handleReadChapter}
+            onClick={isSpeaking ? handleStopReading : () => handleReadChapter(paragraphs)}
           >
             {isSpeaking ? "Dừng nghe" : "Nghe truyện"}
           </button>
@@ -230,12 +264,8 @@ function ViewChapter() {
         >
           Chương trước
         </button>
-
         <div className="u-view-dropdown">
-          <button
-            className="chapter-btn chapter-btn-secondary"
-            onClick={toggleDropdown}
-          >
+          <button className="chapter-btn chapter-btn-secondary" onClick={toggleDropdown}>
             Danh sách chương
           </button>
           {isDropdownOpen && (
@@ -257,7 +287,6 @@ function ViewChapter() {
             </div>
           )}
         </div>
-
         <button
           className={`chapter-btn ${getButtonClass(!nextId)}`}
           onClick={() => nextId && navigateToChapter(nextId)}
@@ -281,12 +310,8 @@ function ViewChapter() {
         >
           Chương trước
         </button>
-
         <div className="u-view-dropdown">
-          <button
-            className="chapter-btn chapter-btn-secondary"
-            onClick={toggleDropdown}
-          >
+          <button className="chapter-btn chapter-btn-secondary" onClick={toggleDropdown}>
             Danh sách chương
           </button>
           {isDropdownOpen && (
@@ -308,7 +333,6 @@ function ViewChapter() {
             </div>
           )}
         </div>
-
         <button
           className={`chapter-btn ${getButtonClass(!nextId)}`}
           onClick={() => nextId && navigateToChapter(nextId)}
@@ -317,7 +341,13 @@ function ViewChapter() {
           Chương tiếp
         </button>
       </div>
-      <Comment />
+      <Comment
+        ref={commentSectionRef}
+        comments={comments}
+        commentText={commentText}
+        setCommentText={setCommentText}
+        handleCommentSubmit={handleCommentSubmit}
+      />
       <Footer />
     </div>
   );

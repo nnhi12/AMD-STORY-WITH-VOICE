@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import VoiceControlChapter from '../../../utils/storyChapterSpeech.js'; 
 import axios from 'axios';
 import './StoryInfo.css';
 import { API_URL } from "../../../env.js";
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 const StoryInfo = () => {
   const { storyId } = useParams();
@@ -11,16 +11,14 @@ const StoryInfo = () => {
   const [chapterList, setChapterList] = useState([]);
   const [canContinueReading, setCanContinueReading] = useState(false);
   const [userId, setUserId] = useState(null);
-  const navigate = useNavigate(); // Hook điều hướng trong React Router
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Lấy userId từ localStorage
     const storedUserId = localStorage.getItem("accountId");
     setUserId(storedUserId);
   }, []);
 
   useEffect(() => {
-    // Lấy thông tin câu chuyện
     axios.get(`${API_URL}/stories/${storyId}`)
       .then(response => {
         setStory(response.data);
@@ -31,14 +29,13 @@ const StoryInfo = () => {
       });
 
     axios.get(`${API_URL}/stories/${storyId}/chapters`)
-      .then(response => setChapterList(response.data)) // Lưu danh sách chương
+      .then(response => setChapterList(response.data))
       .catch(error => console.error("Error fetching chapters:", error));
 
-    // Kiểm tra xem người dùng có thể tiếp tục đọc chương nào không
     if (userId) {
       axios.get(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`)
         .then(response => {
-          setCanContinueReading(!!response.data.chapter); // Kiểm tra xem có chapter nào hay không
+          setCanContinueReading(!!response.data.chapter);
           console.log(response.data.chapter);
           console.log(response.data.count_row);
         })
@@ -46,40 +43,32 @@ const StoryInfo = () => {
     }
   }, [userId, storyId]);
 
-  if (!story) {
-    return <div>Loading...</div>;
-  }
-
   const handleReadFromStart = () => {
     axios.get(`${API_URL}/stories/${storyId}/first?accountId=${userId || ''}`)
-    .then(response => {
-      if (response.data) {
-        const { firstChapter, enableChapter } = response.data;
-
-        // Only navigate if the chapter is enabled
-        if (enableChapter) {
-          navigate(`/stories/${storyId}/chapters/${firstChapter._id}`);
-        } else {
-          alert('You cannot read this chapter if you are not VIP.'); // Optional: show a message when disabled
+      .then(response => {
+        if (response.data) {
+          const { firstChapter, enableChapter } = response.data;
+          if (enableChapter) {
+            navigate(`/stories/${storyId}/chapters/${firstChapter._id}`);
+          } else {
+            alert('You cannot read this chapter if you are not VIP.');
+          }
         }
-      }
       })
       .catch(error => console.error('Error fetching first chapter:', error));
   };
 
   const handleReadLatest = () => {
     axios.get(`${API_URL}/stories/${storyId}/latest?accountId=${userId || ''}`)
-    .then(response => {
-      if (response.data) {
-        const { latestChapter, enableChapter } = response.data;
-
-        // Only navigate if the chapter is enabled
-        if (enableChapter) {
-          navigate(`/stories/${storyId}/chapters/${latestChapter._id}`);
-        } else {
-          alert('You cannot read this chapter if you are not VIP.'); // Optional: show a message when disabled
+      .then(response => {
+        if (response.data) {
+          const { latestChapter, enableChapter } = response.data;
+          if (enableChapter) {
+            navigate(`/stories/${storyId}/chapters/${latestChapter._id}`);
+          } else {
+            alert('You cannot read this chapter if you are not VIP.');
+          }
         }
-      }
       })
       .catch(error => console.error('Error fetching latest chapter:', error));
   };
@@ -88,15 +77,12 @@ const StoryInfo = () => {
     if (userId && storyId) {
       axios.get(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`)
         .then(response => {
-          const {chapter} = response.data;
+          const { chapter } = response.data;
           const count_row = response.data.count_row;
-          console.log(count_row); 
-
-          // Kiểm tra xem chapter có phải là mảng hay đối tượng
           if (Array.isArray(chapter) && chapter.length > 0) {
             navigate(`/stories/${storyId}/chapters/${chapter[0]._id}`, {
               state: { rowCount: count_row },
-            }); // Lấy chapter đầu tiên nếu là mảng
+            });
           } else if (chapter && chapter._id) {
             navigate(`/stories/${storyId}/chapters/${chapter._id}`, {
               state: { rowCount: count_row },
@@ -108,6 +94,18 @@ const StoryInfo = () => {
         .catch(error => console.error('Error fetching reading chapter:', error));
     }
   };
+
+  const callbacks = {
+    handleReadFromStart,
+    handleReadLatest,
+    handleContinueReading,
+  };
+
+  useVoiceControl({ chapters: chapterList, storyId, callbacks });
+
+  if (!story) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <section className="u-story-info">
@@ -129,7 +127,6 @@ const StoryInfo = () => {
           <p>Created at: {new Date(story.created_at).toLocaleString()}</p>
           <p>Updated at: {new Date(story.updated_at).toLocaleString()}</p>
           <p>Trạng thái: {story.status ? 'Đã hoàn thành' : 'Chưa hoàn thành'}</p>
-
         </div>
         <h3>Summary</h3>
         <p>{story.description}</p>
@@ -139,16 +136,14 @@ const StoryInfo = () => {
           <button
             className="u-read-option-button"
             onClick={handleContinueReading}
-            disabled={!canContinueReading} // Vô hiệu hóa nếu không có dữ liệu
-            style={{ display: canContinueReading ? 'inline-block' : 'none' }} // Ẩn nút nếu không có dữ liệu
+            disabled={!canContinueReading}
+            style={{ display: canContinueReading ? 'inline-block' : 'none' }}
           >
             Đọc tiếp
           </button>
         </div>
       </div>
-      <VoiceControlChapter chapters={chapterList} storyId={storyId} />
     </section>
-    
   );
 };
 
