@@ -161,7 +161,7 @@ function ViewChapter() {
   };
 
   const handleContinueReading = () => {
-    handleReadChapter();
+    handleReadChapter(paragraphs);
   };
 
   const handleCommentSubmit = () => {
