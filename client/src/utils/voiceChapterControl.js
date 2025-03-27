@@ -1,9 +1,6 @@
-// src/hooks/useVoiceControl.js
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbacks) => {
-  const navigate = useNavigate();
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
 
@@ -13,10 +10,12 @@ const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbac
     handleReadChapter,
     handleStopReading,
     handleContinueReading,
-    speak
+    speak,
+    scrollToComment,
+    setCommentText,
+    handleCommentSubmit,
   } = callbacks;
 
-  // Khởi tạo SpeechRecognition
   useEffect(() => {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
       console.log('Trình duyệt không hỗ trợ SpeechRecognition');
@@ -25,16 +24,16 @@ const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbac
 
     if (!recognitionRef.current) {
       const recog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recog.lang = 'vi-VN'; // Ngôn ngữ tiếng Việt
-      recog.continuous = true; // Lắng nghe liên tục
-      recog.interimResults = false; // Chỉ lấy kết quả cuối cùng
+      recog.lang = 'vi-VN';
+      recog.continuous = true;
+      recog.interimResults = false;
 
       recog.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-        console.log('Nghe được:', transcript);
+        console.log('ChapterView nghe được:', transcript);
 
-        // Xử lý các lệnh giọng nói
         if (transcript.includes('chương trước')) {
+          console.log('Previous ID:', chapterData.previousId);
           if (chapterData.previousId) {
             speak('Đang chuyển đến chương trước');
             navigateToChapter(chapterData.previousId);
@@ -42,6 +41,7 @@ const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbac
             speak('Không có chương trước');
           }
         } else if (transcript.includes('chương tiếp')) {
+          console.log('Next ID:', chapterData.nextId);
           if (chapterData.nextId) {
             speak('Đang chuyển đến chương tiếp');
             navigateToChapter(chapterData.nextId);
@@ -72,23 +72,38 @@ const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbac
           } else {
             speak('Không thể tiếp tục nghe');
           }
+        } else if (transcript.includes('bình luận truyện')) {
+          speak('Đang mở khung bình luận');
+          scrollToComment();
+        } else if (transcript.startsWith('nhập ')) {
+          const text = transcript.replace('nhập ', '');
+          speak(`Đã nhập: ${text}`);
+          setCommentText(text);
+        } else if (transcript === 'đăng') {
+          console.log('Lệnh đăng được nhận diện');
+          speak('Đang đăng bình luận');
+          handleCommentSubmit();
         } else {
           speak('Tôi không hiểu lệnh của bạn. Hãy thử lại.');
         }
       };
 
+      recog.onerror = (event) => console.error('ChapterView error:', event.error);
       recognitionRef.current = recog;
     }
-  }, [chapterData, isSpeaking, currentParagraphIndex, toggleDropdown, navigateToChapter, handleReadChapter, handleStopReading, handleContinueReading, speak]);
+  }, [chapterData, isSpeaking, currentParagraphIndex, toggleDropdown, navigateToChapter, handleReadChapter, handleStopReading, handleContinueReading, speak, scrollToComment, setCommentText, handleCommentSubmit]);
 
-  // Bật/tắt micro bằng phím Ctrl
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.ctrlKey && recognitionRef.current && !isListening) {
-        recognitionRef.current.start();
-        setIsListening(true);
-        speak('🎤 Đang lắng nghe, bạn có thể nói lệnh của mình.');
-        console.log('🎤 Mic bật');
+        try {
+          recognitionRef.current.start();
+          setIsListening(true);
+          speak('🎤 Đang lắng nghe.');
+          console.log('🎤 ChapterView Mic bật');
+        } catch (error) {
+          console.error('Error starting recognition:', error);
+        }
       }
     };
 
@@ -97,7 +112,7 @@ const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbac
         recognitionRef.current.stop();
         setIsListening(false);
         speak('🔇 Đã dừng lắng nghe.');
-        console.log('🔇 Mic tắt');
+        console.log('🔇 ChapterView Mic tắt');
       }
     };
 
@@ -107,6 +122,9 @@ const useVoiceControl = (chapterData, isSpeaking, currentParagraphIndex, callbac
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      if (recognitionRef.current && isListening) {
+        recognitionRef.current.stop();
+      }
     };
   }, [isListening, speak]);
 
