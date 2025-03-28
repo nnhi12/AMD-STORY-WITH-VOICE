@@ -19,7 +19,9 @@ function ViewChapter() {
   const [userId, setUserId] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [paragraphs, setParagraphs] = useState([]);
-  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(
+    parseInt(localStorage.getItem('currentParagraphIndex'), 10) || 0 // Khởi tạo từ localStorage
+  );
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const paragraphRefs = useRef([]);
@@ -47,6 +49,11 @@ function ViewChapter() {
       .then(response => console.log('View count updated:', response.data))
       .catch(error => console.error('Error incrementing view count:', error));
   }, [chapterId]);
+
+  useEffect(() => {
+    localStorage.setItem('is_Speaking', JSON.stringify(isSpeaking));
+    localStorage.setItem('currentParagraphIndex', currentParagraphIndex);
+  }, [isSpeaking, currentParagraphIndex]);
 
   useEffect(() => {
     axios.get(`${API_URL}/stories/${storyId}/chapters/${chapterId}`)
@@ -84,6 +91,10 @@ function ViewChapter() {
   }, [rowCount, paragraphs]);
 
   const updateReadingProgress = async (chapterId, countRow) => {
+    if (!userId) {
+      console.log('Người dùng chưa đăng nhập, bỏ qua cập nhật tiến trình');
+      return;
+    }
     try {
       await axios.put(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`, {
         chapterId,
@@ -128,6 +139,8 @@ function ViewChapter() {
     //let paragraphArray = "";
     //const isString = (typeof chapter_paragraph) == "string" ;
     //isString? paragraphArray = chapter_paragraph.split('\n').filter(p => p.trim()) : "";
+    setIsSpeaking(true);
+    localStorage.setItem('is_Speaking', JSON.stringify(true));
     console.log('Paragraphs:', chapter_paragraph, 'Current index:', currentParagraphIndex);
     utteranceQueue = chapter_paragraph.slice(currentParagraphIndex).map((text, index) => {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -144,7 +157,10 @@ function ViewChapter() {
         }
       };
       utterance.onend = () => {
-        if (index === chapter_paragraph.length - currentParagraphIndex - 1) setIsSpeaking(false);
+        if (index === chapter_paragraph.length - currentParagraphIndex - 1) {
+          setIsSpeaking(false);
+          localStorage.setItem('isSpeaking', JSON.stringify(false));
+        }
       };
       return utterance;
     });
@@ -152,16 +168,22 @@ function ViewChapter() {
       console.log(`Speaking paragraph ${currentParagraphIndex + idx}:`, utterance.text);
       synth.speak(utterance);
     });
-    setIsSpeaking(true);
   };
 
   const handleStopReading = () => {
-    synth.cancel();
-    setIsSpeaking(false);
+    console.log('Before cancel: ', window.speechSynthesis.speaking); // Trạng thái trước
+    window.speechSynthesis.cancel();
+    console.log('After cancel: ', window.speechSynthesis.speaking);  // Dừng tất cả utterance đang phát
+    setIsSpeaking(false);              // Cập nhật trạng thái
+    localStorage.setItem('is_Speaking', JSON.stringify(false)); // Nếu bạn dùng localStorage
   };
 
-  const handleContinueReading = () => {
-    handleReadChapter(paragraphs);
+
+
+  const handleContinueReading = (chapter_paragraph, index) => {
+    console.log('handleContinueReading executed, received index:', index);
+  setCurrentParagraphIndex(index); // Cập nhật state (sẽ áp dụng cho lần render sau)
+  handleReadChapter(chapter_paragraph, index);
   };
 
   const handleCommentSubmit = () => {
@@ -195,6 +217,7 @@ function ViewChapter() {
     scrollToComment: () => commentSectionRef.current?.scrollToInput(),
     setCommentText,
     handleCommentSubmit,
+    updateReadingProgress,
   };
 
   // Sửa cách gọi useVoiceControl
@@ -202,9 +225,9 @@ function ViewChapter() {
     chapters, // Danh sách chương từ API
     storyId,
     chapterData,
-    isSpeaking,
     currentParagraphIndex,
     callbacks,
+    userId,
   }) || {};
 
   useEffect(() => {
@@ -214,6 +237,7 @@ function ViewChapter() {
         const rect = ref.getBoundingClientRect();
         return rect.top >= 0 && rect.top <= window.innerHeight;
       });
+      console.log('Visible paragraph index:', visibleParagraphIndex);
       if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
         setCurrentParagraphIndex(visibleParagraphIndex);
         updateReadingProgress(chapterId, visibleParagraphIndex + 1);

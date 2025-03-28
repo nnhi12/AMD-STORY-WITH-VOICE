@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import './AboutUs.css';
 import 'aos/dist/aos.css';
 import AOS from 'aos';
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 const AboutUs = () => {
   useEffect(() => {
@@ -11,6 +12,8 @@ const AboutUs = () => {
     });
   }, []);
 
+  useVoiceControl("", "", "");
+  
   return (
     <div className="about-container my-5">
       <h1 className="text-center mb-4" data-aos="fade-up">
