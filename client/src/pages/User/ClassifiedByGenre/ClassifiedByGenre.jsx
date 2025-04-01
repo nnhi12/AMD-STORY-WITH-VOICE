@@ -5,13 +5,16 @@ import Navbar from '../../../components/User/navbar.jsx';
 import ListStory from '../../../components/User/ListStoryGenre.jsx';
 import ListGenre from '../../../components/User/ListGenre.jsx';
 import '../../../components/User/homepage.css';
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 
-const GenrePage = () => (
-  <div className="u-main-page">
-    <Header />
-    <Navbar />
-    <div className="main-page-content">
+const GenrePage = () => {
+  useVoiceControl("", "", "");
+  return (
+    <div className="u-main-page">
+      <Header />
+      <Navbar />
+      <div className="main-page-content">
         <div className="second-section-container">
           <div className="first-section-container">
             <ListStory />
@@ -20,10 +23,11 @@ const GenrePage = () => (
             <ListGenre />
           </div>
         </div>
-        
+
       </div>
-    <Footer />
-  </div>
-);
+      <Footer />
+    </div>
+  )
+};
 
 export default GenrePage;

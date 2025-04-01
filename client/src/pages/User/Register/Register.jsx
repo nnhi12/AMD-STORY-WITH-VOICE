@@ -3,6 +3,7 @@ import axios from 'axios';
 import './Register.css';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from "../../../env.js";
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 function Register() {
   const navigate = useNavigate();
@@ -82,6 +83,8 @@ function Register() {
     setShowConfirmPassword(prevState => !prevState);
   };
 
+  useVoiceControl("", "", "");
+  
   return (
     <div className="body-regis">
       <div className="signup-container">

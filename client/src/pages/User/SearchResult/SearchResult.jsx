@@ -6,11 +6,12 @@ import Navbar from '../../../components/User/navbar.jsx';
 import ListSearching from '../../../components/User/ListSeaching.jsx';
 import './SearchResult.css';
 import '../../../components/User/homepage.css';
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 const SearchStory = () => {
   const location = useLocation();
   const searchResults = location.state?.searchResults || [];
-
+  useVoiceControl("", "", "");
   return (
     <div className="u-main-page">
       <Header />

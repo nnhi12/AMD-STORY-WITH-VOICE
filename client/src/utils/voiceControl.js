@@ -3,13 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from "../env";
 
-const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks }) => {
+const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, nextId, previousId, userId}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const [userId, setUserId] = useState(null);
   const isChapterPage = location.pathname.includes('/chapters');
+
+  const nextIdRef = useRef(nextId);
+  const previousIdRef = useRef(previousId);
 
   const speak = (text, callback) => {
     const synth = window.speechSynthesis;
@@ -21,6 +24,12 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     if (callback) utterance.onend = callback;
     synth.speak(utterance);
   };
+
+  useEffect(() => {
+    nextIdRef.current = nextId;
+    previousIdRef.current = previousId;
+    console.log("Props cập nhật - previousId:", previousId, "nextId:", nextId);
+  }, [nextId, previousId]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("accountId");
@@ -42,21 +51,26 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         console.log('VoiceControl nghe được:', transcript);
         const isSpeaking = JSON.parse(localStorage.getItem('is_Speaking')) || false;
         const currentParagraphIndex = JSON.parse(localStorage.getItem('currentParagraphIndex')) || false;
-        if (!isChapterPage) {
-          if (transcript.includes('truyện hay nhất')) {
-            speak("Đang chuyển đến danh sách truyện hot nhất.", () => navigate('/tophot'));
-          } else if (transcript.includes('thư viện')) {
-            speak("Đang chuyển đến thư viện của bạn.", () => navigate('/library'));
-          } else if (transcript.includes('trang chủ')) {
-            speak("Đang quay lại trang chủ.", () => navigate('/'));
-          } else if (transcript.startsWith('tìm ')) {
-            const storyName = transcript.substring(4).trim();
-            if (storyName) {
-              speak(`Đang tìm truyện ${storyName}`, () => fetchStoryIdByName(storyName));
-            } else {
-              speak("Vui lòng cung cấp tên truyện sau từ 'tìm'.");
-            }
+        if (transcript.includes('trang chủ')) {
+          speak("Đang quay lại trang chủ.", () => navigate('/'));
+          return;
+        } else if (transcript.includes('truyện hay nhất')) {
+          speak("Đang chuyển đến danh sách truyện hot nhất.", () => navigate('/tophot'));
+          return;
+        } else if (transcript.includes('thư viện')) {
+          speak("Đang chuyển đến thư viện của bạn.", () => navigate('/library'));
+          return;          
+        } else if (transcript.includes('theo dõi')) {
+          speak("Đang chuyển đến thư viện của bạn.", () => navigate('/favpage'));
+          return;          
+        } else if (transcript.startsWith('tìm ')) {
+          const storyName = transcript.substring(4).trim();
+          if (storyName) {
+            speak(`Đang tìm truyện ${storyName}`, () => fetchStoryIdByName(storyName));
+          } else {
+            speak("Vui lòng cung cấp tên truyện sau từ 'tìm'.");
           }
+          return;
         }
 
         if (chapters && storyId) {
@@ -91,15 +105,15 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
 
           console.log('Checking nghe truyện:', { transcript, isSpeaking, currentParagraphIndex }); // Debug
 
-          if (transcript.includes('chương trước') && chapterData.previousId) {
-            speak('Đang chuyển đến chương trước', () => navigateToChapter(chapterData.previousId));
-          } else if (transcript.includes('chương tiếp') && chapterData.nextId) {
-            speak('Đang chuyển đến chương tiếp', () => navigateToChapter(chapterData.nextId));
+          if (transcript.includes('chương trước') && previousIdRef.current) {
+            speak('Đang chuyển đến chương trước', () => navigateToChapter(previousIdRef.current));
+          } else if (transcript.includes('trương tuyết') && nextIdRef.current) {
+            speak('Đang chuyển đến chương tiếp', () => navigateToChapter(nextIdRef.current));
           } else if (transcript.includes('danh sách chương')) {
             speak('Đang mở danh sách chương', toggleDropdown);
           } else if (transcript.includes('nghe truyện') && !isSpeaking) {
             console.log('Triggering handleReadChapter'); // Debug
-            speak('Đang bắt đầu nghe truyện', handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph')), currentParagraphIndex));
+            speak('Đang bắt đầu nghe truyện', handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))));
           } else if (transcript.includes('dừng nghe')) {
             console.log('Triggering handleStop');
             handleStopReading();    // Dừng ngay lập tức
@@ -108,7 +122,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           else if (transcript.includes('tiếp tục nghe') && !isSpeaking) {
             if (currentParagraphIndex > 0) {
                 console.log('Triggering handleContinueReading');
-                speak('Đang tiếp tục nghe truyện', () => handleContinueReading(JSON.parse(localStorage.getItem('chapter_paragraph')), currentParagraphIndex));
+                handleContinueReading(); // Gọi ngay lập tức
+                speak('Đang tiếp tục nghe truyện'); // Phát âm sau khi bắt đầu đọc
             } else {
                 speak('Bạn đang ở đầu chương. Hãy nói "nghe truyện" để bắt đầu.');
             }
@@ -174,7 +189,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
   };
 
   const handleContinueReadingChapter= () => {
-    const userId = localStorage.getItem("accountId");
+    userId = localStorage.getItem("accountId");
     if (userId && storyId) {
       axios.get(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`)
         .then(response => {

@@ -180,11 +180,13 @@ function ViewChapter() {
 
 
 
-  const handleContinueReading = (chapter_paragraph, index) => {
-    console.log('handleContinueReading executed, received index:', index);
-  setCurrentParagraphIndex(index); // Cập nhật state (sẽ áp dụng cho lần render sau)
-  handleReadChapter(chapter_paragraph, index);
-  };
+  const handleContinueReading = () => {
+  if (localStorage.getItem('currentParagraphIndex') > 0) {
+    handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))); // Sử dụng paragraphs từ state
+  } else {
+    speak('Bạn đang ở đầu chương. Hãy nói "nghe truyện" để bắt đầu.');
+  }
+};
 
   const handleCommentSubmit = () => {
     if (!commentText || commentText.trim() === '') {
@@ -227,6 +229,8 @@ function ViewChapter() {
     chapterData,
     currentParagraphIndex,
     callbacks,
+    nextId: chapterData.nextId,
+    previousId: chapterData.previousId,
     userId,
   }) || {};
 
