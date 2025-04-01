@@ -7,6 +7,7 @@ import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
 import { API_URL } from "../../../env.js";
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 const PaymentPage = () => {
     const [sdkReady, setSdkReady] = useState(false);
@@ -78,6 +79,8 @@ const PaymentPage = () => {
     useEffect(() => {
         addPaypalScripts();
     }, []);
+
+    useVoiceControl("", "", "");
 
     return (
         <div className="payment-page">

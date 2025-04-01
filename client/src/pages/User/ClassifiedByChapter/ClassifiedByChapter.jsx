@@ -5,9 +5,12 @@ import Navbar from '../../../components/User/navbar.jsx';
 import ListStory from '../../../components/User/ListReading.jsx';
 import ListGenre from '../../../components/User/ListGenre.jsx';
 import '../../../components/User/homepage.css';
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 
-const ClassifiedByChapter = () => (
+const ClassifiedByChapter = () => {
+  useVoiceControl("", "", "");
+  return (
   <div className="u-main-page">
     <Header />
     <Navbar />
@@ -23,6 +26,6 @@ const ClassifiedByChapter = () => (
       </div>
     <Footer />
   </div>
-);
+)};
 
 export default ClassifiedByChapter;

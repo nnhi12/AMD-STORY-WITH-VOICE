@@ -4,7 +4,7 @@ import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
 import ListReading from '../../../components/User/Library.jsx';
 import '../../../components/User/Page.css';
-
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 const LibPage = () => {
   const [userId, setUserId] = useState(null); 
@@ -13,6 +13,8 @@ const LibPage = () => {
     setUserId(storedUserId); 
   }, []);
 
+  useVoiceControl("", "", "");
+  
   return (
       <div className="all-page">
         <Header />

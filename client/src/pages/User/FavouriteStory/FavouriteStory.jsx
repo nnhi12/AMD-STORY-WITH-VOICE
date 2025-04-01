@@ -4,7 +4,7 @@ import Footer from '../../../layouts/footer/User/footer.jsx';
 import Navbar from '../../../components/User/navbar.jsx';
 import ListReading from '../../../components/User/ListFavourite.jsx';
 import '../../../components/User/Page.css';
-
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 const FavPage = () => {
   const [userId, setUserId] = useState(null); 
@@ -12,6 +12,8 @@ const FavPage = () => {
     const storedUserId = localStorage.getItem("accountId"); 
     setUserId(storedUserId); 
   }, []);
+
+  useVoiceControl("", "", "");
 
   return (
       <div className="all-page">

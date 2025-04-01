@@ -9,6 +9,7 @@ import DailyUpdates from '../../../components/User/ListReading.jsx';
 import HottestSection from '../../../components/User/HottestSection.jsx';
 import '../../../components/User/homepage.css';
 import { API_URL } from "../../../env.js";
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 
 const HomePage = () => {
@@ -59,6 +60,7 @@ const HomePage = () => {
     checkUserStatus();
   }, []);
 
+  useVoiceControl("", "", "");
   return (
     <div className="u-main-page">
       <Header />
