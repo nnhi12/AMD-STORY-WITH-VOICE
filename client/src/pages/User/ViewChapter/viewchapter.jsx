@@ -237,21 +237,33 @@ function ViewChapter() {
   }) || {};
 
   useEffect(() => {
-    const handleScroll = () => {
-      const visibleParagraphIndex = paragraphRefs.current.findIndex((ref, index) => {
-        if (!ref) return false;
-        const rect = ref.getBoundingClientRect();
-        return rect.top >= 0 && rect.top <= window.innerHeight;
-      });
-      console.log('Visible paragraph index:', visibleParagraphIndex);
-      if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
-        setCurrentParagraphIndex(visibleParagraphIndex);
-        updateReadingProgress(chapterId, visibleParagraphIndex + 1);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [currentParagraphIndex, chapterId]);
+  const handleScroll = () => {
+    const windowHeight = window.innerHeight;
+    const centerY = windowHeight / 2; // Điểm giữa màn hình
+
+    const visibleParagraphIndex = paragraphRefs.current.reduce((closestIndex, ref, index) => {
+      if (!ref) return closestIndex;
+      const rect = ref.getBoundingClientRect();
+      const distanceFromCenter = Math.abs(rect.top + rect.height / 2 - centerY); // Khoảng cách từ giữa đoạn văn đến giữa màn hình
+
+      if (closestIndex === -1) return index; // Nếu chưa có đoạn nào, chọn đoạn đầu tiên
+      const currentClosestDistance = Math.abs(
+        paragraphRefs.current[closestIndex].getBoundingClientRect().top +
+        paragraphRefs.current[closestIndex].getBoundingClientRect().height / 2 - centerY
+      );
+      return distanceFromCenter < currentClosestDistance ? index : closestIndex;
+    }, -1);
+
+    if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
+      console.log('Highlighting paragraph at index:', visibleParagraphIndex);
+      setCurrentParagraphIndex(visibleParagraphIndex);
+      updateReadingProgress(chapterId, visibleParagraphIndex + 1);
+    }
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, [currentParagraphIndex, chapterId]); // Thêm updateReadingProgress vào dependencies nếu cần
 
   if (!chapterData.chapter) {
     return <div>Loading...</div>;
