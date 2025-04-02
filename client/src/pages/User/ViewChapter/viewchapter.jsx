@@ -19,9 +19,7 @@ function ViewChapter() {
   const [userId, setUserId] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [paragraphs, setParagraphs] = useState([]);
-  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(
-    parseInt(localStorage.getItem('currentParagraphIndex'), 10) || 0 // Khởi tạo từ localStorage
-  );
+  const [currentParagraphIndex, setCurrentParagraphIndex] = useState(0);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const paragraphRefs = useRef([]);
@@ -91,12 +89,12 @@ function ViewChapter() {
   }, [rowCount, paragraphs]);
 
   const updateReadingProgress = async (chapterId, countRow) => {
-    if (!userId) {
+    if (!localStorage.getItem('accountId')) {
       console.log('Người dùng chưa đăng nhập, bỏ qua cập nhật tiến trình');
       return;
     }
     try {
-      await axios.put(`${API_URL}/users/${userId}/stories/${storyId}/reading-chapter`, {
+      await axios.put(`${API_URL}/users/${localStorage.getItem('accountId')}/stories/${storyId}/reading-chapter`, {
         chapterId,
         countRow
       });
@@ -139,10 +137,11 @@ function ViewChapter() {
     //let paragraphArray = "";
     //const isString = (typeof chapter_paragraph) == "string" ;
     //isString? paragraphArray = chapter_paragraph.split('\n').filter(p => p.trim()) : "";
+    let pIndex = parseInt(localStorage.getItem("currentParagraphIndex"));
     setIsSpeaking(true);
     localStorage.setItem('is_Speaking', JSON.stringify(true));
-    console.log('Paragraphs:', chapter_paragraph, 'Current index:', currentParagraphIndex);
-    utteranceQueue = chapter_paragraph.slice(currentParagraphIndex).map((text, index) => {
+    console.log('Paragraphs:', chapter_paragraph, 'Current index:', typeof (pIndex));
+    utteranceQueue = chapter_paragraph.slice(pIndex).map((text, index) => {
       const utterance = new SpeechSynthesisUtterance(text);
       const voices = synth.getVoices();
       utterance.lang = "vi-VN";
@@ -150,14 +149,14 @@ function ViewChapter() {
       if (vietnameseVoice) utterance.voice = vietnameseVoice;
       utterance.onboundary = (event) => {
         if (event.charIndex === 0) {
-          const element = paragraphRefs.current[currentParagraphIndex + index];
+          const element = paragraphRefs.current[pIndex + index];
           if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setCurrentParagraphIndex(currentParagraphIndex + index);
-          updateReadingProgress(chapterId, currentParagraphIndex + index + 1);
+          setCurrentParagraphIndex(pIndex + index);
+          updateReadingProgress(chapterId, pIndex + index + 1);
         }
       };
       utterance.onend = () => {
-        if (index === chapter_paragraph.length - currentParagraphIndex - 1) {
+        if (index === chapter_paragraph.length - pIndex - 1) {
           setIsSpeaking(false);
           localStorage.setItem('isSpeaking', JSON.stringify(false));
         }
@@ -165,7 +164,7 @@ function ViewChapter() {
       return utterance;
     });
     utteranceQueue.forEach((utterance, idx) => {
-      console.log(`Speaking paragraph ${currentParagraphIndex + idx}:`, utterance.text);
+      console.log(`Speaking paragraph ${pIndex + idx}:`, utterance.text);
       synth.speak(utterance);
     });
   };
@@ -181,12 +180,12 @@ function ViewChapter() {
 
 
   const handleContinueReading = () => {
-  if (localStorage.getItem('currentParagraphIndex') > 0) {
-    handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))); // Sử dụng paragraphs từ state
-  } else {
-    speak('Bạn đang ở đầu chương. Hãy nói "nghe truyện" để bắt đầu.');
-  }
-};
+    if (localStorage.getItem('currentParagraphIndex') > 0) {
+      handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))); // Sử dụng paragraphs từ state
+    } else {
+      speak('Bạn đang ở đầu chương. Hãy nói "nghe truyện" để bắt đầu.');
+    }
+  };
 
   const handleCommentSubmit = () => {
     if (!commentText || commentText.trim() === '') {
@@ -220,6 +219,7 @@ function ViewChapter() {
     setCommentText,
     handleCommentSubmit,
     updateReadingProgress,
+    setComments,
   };
 
   // Sửa cách gọi useVoiceControl
@@ -231,7 +231,9 @@ function ViewChapter() {
     callbacks,
     nextId: chapterData.nextId,
     previousId: chapterData.previousId,
-    userId,
+    chapterId: chapterData?.chapter?._id || null,
+    userId: localStorage.getItem('accountId'),
+    commentText: commentText,
   }) || {};
 
   useEffect(() => {
@@ -325,7 +327,11 @@ function ViewChapter() {
       </div>
       <div className="chapter-content-text">
         {paragraphs.map((para, index) => (
-          <p key={index} ref={el => paragraphRefs.current[index] = el} className="chapter-paragraph">
+          <p
+            key={index}
+            ref={el => paragraphRefs.current[index] = el}
+            className={`chapter-paragraph ${index === currentParagraphIndex ? 'highlight' : ''}`}
+          >
             {para}
           </p>
         ))}
