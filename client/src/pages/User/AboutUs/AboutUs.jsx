@@ -24,7 +24,7 @@ const AboutUs = () => {
         <div className="col-md-8 mx-auto">
           <div className="image-section" data-aos="fade-up">
             <img
-              src="https://cdn.zenquiz.net/external/2024/01/03/12/2f30a2a0-aa31-11ee-aafe-050901070303-compressed.jpg" // Thay thế bằng URL ảnh của bạn
+              src="https://cdn.pixabay.com/photo/2018/01/12/10/19/fantasy-3077928_1280.jpg" // Thay thế bằng URL ảnh của bạn
               alt="Comic Book"
               className="about-image"
             />

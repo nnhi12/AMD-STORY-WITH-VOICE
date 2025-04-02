@@ -256,6 +256,27 @@
   z-index: 1000;
 }
 
+.highlight {
+  box-shadow: 0 2px 8px rgba(255, 229, 127, 0.4);
+  /* Bo góc mềm mại */
+  border-radius: 6px;
+  /* Padding để text không chạm mép */
+  padding: 4px 6px;
+  /* Margin nhẹ để tạo khoảng cách với các đoạn khác */
+  margin: 2px 0;
+  /* Hiệu ứng chuyển đổi mượt mà khi thêm/xóa highlight */
+  transition: all 0.3s ease-in-out;
+  /* Tô sáng viền nhẹ để làm nổi bật hơn */
+  border: 1px solid #ffd54f;
+}
+
+/* Hiệu ứng khi hover (tùy chọn, để tăng tương tác) */
+.highlight:hover {
+  background: linear-gradient(90deg, #ffd54f 0%, #fffde7 70%, #ffffff 100%);
+  box-shadow: 0 4px 12px rgba(255, 213, 79, 0.6);
+  border-color: #ffc107;
+}
+
 @media (max-width: 810px) {
   .chapter-content .chapter-post-date {
     font-size: 15px;
