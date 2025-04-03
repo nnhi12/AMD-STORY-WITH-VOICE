@@ -36,4 +36,31 @@ router.put('/chapters/:chapterId/increment-view', async (req, res) => {
     }
 });
 
+router.get('/stories/:storyId/chapters/name/:chapterName', async (req, res) => {
+    const { storyId, chapterName } = req.params;
+    try {
+      const story = await storyModel.findById(storyId).populate('chapters');
+      if (!story) {
+        return res.status(404).json({ message: 'Truyện không tồn tại' });
+      }
+  
+      // Tìm chapter linh hoạt hơn
+      const chapter = story.chapters.find(chap => {
+        const chapNameLower = chap.name.toLowerCase();
+        const searchNameLower = chapterName.toLowerCase();
+        return chapNameLower.includes(searchNameLower) || // Tìm kiếm gần đúng
+               chapNameLower === searchNameLower;         // Hoặc khớp chính xác
+      });
+  
+      if (!chapter) {
+        return res.status(404).json({ message: 'Chapter không tồn tại trong truyện này' });
+      }
+  
+      res.status(200).json(chapter);
+    } catch (error) {
+      console.error('Lỗi khi tìm chapter:', error);
+      res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+  });
+  
 module.exports = router;

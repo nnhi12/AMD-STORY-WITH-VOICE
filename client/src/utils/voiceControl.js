@@ -80,8 +80,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         } else if (transcript.includes('thư viện')) {
           speak("Đang chuyển đến thư viện của bạn.", () => navigate('/library'));
           return;
-        } else if (transcript.includes('theo dõi')) {
-          speak("Đang chuyển đến thư viện của bạn.", () => navigate('/favpage'));
+        } else if (transcript.includes('danh sách theo dõi')) {
+          speak("Đang chuyển đến danh sách truyện bạn theo dõi.", () => navigate('/favpage'));
           return;
         } else if (transcript.startsWith('tìm ')) {
           const storyName = transcript.substring(4).trim();
@@ -115,7 +115,71 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           return;
         }
 
-        if (chapters && storyId) {
+        if (transcript.includes('thêm vào danh sách đọc') && location.pathname.startsWith('/storyinfo')) {
+          const userId = localStorage.getItem("accountId");
+          const currentStoryId = location.pathname.split('/storyinfo/')[1]; // Lấy storyId từ URL
+
+          if (!userId) {
+            speak("Bạn cần đăng nhập để thêm truyện vào danh sách đọc.");
+            return;
+          }
+
+          if (!currentStoryId) {
+            speak("Không tìm thấy truyện để thêm vào danh sách đọc.");
+            return;
+          }
+
+          const addToReadingList = async () => {
+            try {
+              const response = await axios.post(`${API_URL}/add-to-reading-list`, {
+                accountId: userId,
+                storyId: currentStoryId,
+              });
+              if (response.data.message) {
+                speak("Đã thêm truyện vào danh sách đọc thành công.");
+              }
+            } catch (error) {
+              console.error('Error adding story to reading list:', error);
+              speak("Bạn đã lưu truyện này rồi hoặc có lỗi xảy ra.");
+            }
+          };
+          addToReadingList();
+          return;
+        }
+
+        if (transcript.includes('theo dõi truyện') || transcript.includes('thêm vào danh sách theo dõi')) {
+          const userId = localStorage.getItem("accountId");
+          const currentStoryId = location.pathname.split('/storyinfo/')[1];
+      
+          if (!userId) {
+            speak("Bạn cần đăng nhập để theo dõi truyện.");
+            return;
+          }
+      
+          if (!currentStoryId) {
+            speak("Không tìm thấy truyện để theo dõi.");
+            return;
+          }
+      
+          const followStory = async () => {
+            try {
+              const response = await axios.post(`${API_URL}/add-to-follow-list`, {
+                accountId: userId,
+                storyId: currentStoryId,
+              });
+              if (response.data.message) {
+                speak("Đã theo dõi truyện thành công.");
+              }
+            } catch (error) {
+              console.error('Lỗi khi theo dõi truyện:', error);
+              speak("Bạn đã theo dõi truyện này rồi hoặc có lỗi xảy ra.");
+            }
+          };
+          followStory();
+          return;
+        }
+
+        if (location.pathname.startsWith('/storyinfo') && chapters && storyId) {
           if (transcript.includes("đọc từ đầu")) {
             speak("Đang mở chương đầu tiên...", handleReadFromStart);
           } else if (transcript.includes("chương mới nhất")) {
@@ -123,12 +187,34 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           } else if (transcript.includes("đọc tiếp")) {
             speak("Đang tiếp tục đọc...", handleContinueReadingChapter);
           } else {
-            chapters.forEach(chap => {
-              if (transcript.includes(chap.name.toLowerCase())) {
-                speak(`Đang mở chương ${chap.name}`, () => 
-                  navigate(`/stories/${storyId}/chapters/${chap._id}`));
+            const normalizeChapterName = (text) => {
+              const parts = text.split(' ').filter(part => part);
+              const chapterIndex = parts.findIndex(part => part === 'chương');
+              if (chapterIndex !== -1) {
+                const chapterNum = parts.slice(chapterIndex + 1).join(' ');
+                return `Chương ${chapterNum}`;
               }
-            });
+              return text;
+            };
+    
+            const chapterName = normalizeChapterName(transcript);
+            console.log('Chapter name gửi đi:', chapterName);
+    
+            const findChapter = async () => {
+              try {
+                const response = await axios.get(
+                  `${API_URL}/stories/${storyId}/chapters/name/${encodeURIComponent(chapterName)}`
+                );
+                const chapter = response.data;
+                speak(`Đang mở ${chapter.name}`, () => {
+                  navigate(`/stories/${storyId}/chapters/${chapter._id}`);
+                });
+              } catch (error) {
+                console.error('Lỗi khi tìm chapter:', error);
+                speak(`Không tìm thấy chapter có tên ${chapterName} trong truyện này.`);
+              }
+            };
+            findChapter();
           }
         }
 
@@ -196,6 +282,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     return transcript.includes('truyện hay nhất') ||
            transcript.includes('thư viện') ||
            transcript.includes('trang chủ') ||
+           transcript.includes('danh sách theo dõi') ||
            transcript.startsWith('tìm ') ||
            transcript.startsWith('thể loại ') || // Thêm lệnh tìm thể loại
            transcript.startsWith('mở thể loại ') ||
@@ -210,7 +297,10 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
            transcript.includes('tiếp tục nghe') ||
            transcript.includes('bình luận truyện') ||
            transcript.startsWith('nhập ') ||
-           transcript.includes('đang bình luận');
+           transcript.includes('đang bình luận') ||
+           transcript.includes('thêm vào danh sách đọc') ||
+           transcript.includes('theo dõi truyện') || 
+           transcript.includes('thêm vào danh sách theo dõi');
   };
 
   const submitComment = async () => {
