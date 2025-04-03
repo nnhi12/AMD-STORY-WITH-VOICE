@@ -1,0 +1,40 @@
+.recommended-stories {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .recommended-stories h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .recommended-stories ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .recommended-stories li {
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  .recommended-stories li:last-child {
+    border-bottom: none;
+  }
+
+  .recommended-stories li a {
+    text-decoration: none;
+    color: #007bff;
+    transition: color 0.3s;
+  }
+  
+  .recommended-stories li a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
