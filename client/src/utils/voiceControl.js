@@ -9,6 +9,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const isChapterPage = location.pathname.includes('/chapters');
+  const [categories, setCategories] = useState([]);
   const userIdRef = useRef(userId);
   const nextIdRef = useRef(nextId);
   const previousIdRef = useRef(previousId);
@@ -36,6 +37,20 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     currentParagraphIndexRef.current = currentParagraphIndex;
     console.log("Props cập nhật - previousId:", previousId, "nextId:", nextId, "chapterId:", chapterId);
   }, [nextId, previousId, userId, commentText, chapterId, currentParagraphIndex]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/categories`);
+        setCategories(response.data);
+        console.log('Categories loaded:', response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        speak("Không thể tải danh sách thể loại.");
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
@@ -75,6 +90,28 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           } else {
             speak("Vui lòng cung cấp tên truyện sau từ 'tìm'.");
           }
+          return;
+        }
+
+        if (transcript.startsWith('thể loại ') || transcript.startsWith('mở thể loại ')) {
+          const genreName = transcript.replace('thể loại ', '').replace('mở thể loại ', '').trim();
+          console.log('GenreName:', genreName);
+
+          const fetchCategoryByName = async () => {
+            try {
+              const response = await axios.get(`${API_URL}/category-by-name`, {
+                params: { name: genreName }
+              });
+              const matchedCategory = response.data;
+              speak(`Đang mở thể loại ${matchedCategory.name}`, () => 
+                navigate(`/classifiedbygenre/${matchedCategory._id}`)
+              );
+            } catch (error) {
+              console.error('Error fetching category by name:', error);
+              speak(`Không tìm thấy thể loại ${genreName}.`);
+            }
+          };
+          fetchCategoryByName();
           return;
         }
 
@@ -160,6 +197,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
            transcript.includes('thư viện') ||
            transcript.includes('trang chủ') ||
            transcript.startsWith('tìm ') ||
+           transcript.startsWith('thể loại ') || // Thêm lệnh tìm thể loại
+           transcript.startsWith('mở thể loại ') ||
            transcript.includes('đọc từ đầu') ||
            transcript.includes('chương mới nhất') ||
            transcript.includes('đọc tiếp') ||
@@ -217,7 +256,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         speak(`Đang chuyển đến truyện ${data[0].name}`, () => 
           navigate(`/storyinfo/${data[0]._id}`));
       } else {
-        speak(`Có nhiều kết quả, đang hiển thị danh sách tìm kiếm.`, () =>
+        speak(`Đang hiển thị danh sách tìm kiếm.`, () =>
           navigate('/searchresult', { state: { searchResults: data } }));
       }
     } catch (error) {

@@ -37,4 +37,27 @@ router.get('/categories/:categoryId/stories', async (req, res) => {
     }
 });
 
+router.get('/category-by-name', async (req, res) => {
+    try {
+        const { name } = req.query; // Lấy tham số name từ query string
+        if (!name) {
+            return res.status(400).json({ message: 'Vui lòng cung cấp tên thể loại' });
+        }
+
+        // Tìm thể loại với tên khớp (không phân biệt hoa thường)
+        const category = await categoryModel.findOne({ 
+            name: { $regex: new RegExp(`^${name}$`, 'i') } // Tìm chính xác, không phân biệt hoa/thường
+        });
+
+        if (!category) {
+            return res.status(404).json({ message: `Không tìm thấy thể loại ${name}` });
+        }
+
+        res.json(category); // Trả về object thể loại duy nhất
+    } catch (error) {
+        console.error('Error fetching category by name:', error.message);
+        res.status(500).json({ message: 'Error fetching category by name' });
+    }
+});
+
 module.exports = router;
