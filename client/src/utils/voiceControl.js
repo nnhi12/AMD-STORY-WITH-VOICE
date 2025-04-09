@@ -77,7 +77,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         } else if (transcript.includes('truyện hay nhất')) {
           speak("Đang chuyển đến danh sách truyện hot nhất.", () => navigate('/tophot'));
           return;
-        } else if (transcript.includes('thư viện')) {
+        } else if (transcript.includes('đến thư viện')) {
           speak("Đang chuyển đến thư viện của bạn.", () => navigate('/library'));
           return;
         } else if (transcript.includes('danh sách theo dõi')) {
@@ -177,6 +177,57 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           };
           followStory();
           return;
+        }
+
+        if (location.pathname === '/library') {
+          // Lệnh "đọc các truyện có trong thư viện"
+          if (transcript.includes('đọc các truyện có trong thư viện')) {
+            if (books.length === 0) {
+              speak("Thư viện của bạn hiện không có truyện nào.");
+              return;
+            }
+
+            const readBooks = () => {
+              let index = 0;
+              const speakNextBook = () => {
+                if (index < books.length && isSpeaking) {
+                  const book = books[index];
+                  speak(book.name, () => {
+                    index++;
+                    speakNextBook();
+                  });
+                }
+              };
+              speakNextBook();
+            };
+
+            speak("Danh sách các truyện trong thư viện của bạn là:", readBooks);
+            return;
+          }
+
+          // Lệnh "dừng"
+          if (transcript.includes('dừng')) {
+            stopSpeaking();
+            speak("Đã dừng đọc danh sách truyện.");
+            return;
+          }
+
+          // Lệnh "đọc truyện xxx"
+          if (transcript.startsWith('đọc truyện ')) {
+            const storyName = transcript.replace('đọc truyện ', '').trim();
+            const matchedBook = books.find(book => 
+              book.name.toLowerCase().includes(storyName)
+            );
+
+            if (matchedBook) {
+              speak(`Đang mở truyện ${matchedBook.name}`, () => {
+                navigate(`/storyinfo/${matchedBook._id}`);
+              });
+            } else {
+              speak(`Không tìm thấy truyện ${storyName} trong thư viện của bạn.`);
+            }
+            return;
+          }
         }
 
         if (location.pathname.startsWith('/storyinfo') && chapters && storyId) {
@@ -280,7 +331,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
 
   const handleCommand = (transcript) => {
     return transcript.includes('truyện hay nhất') ||
-           transcript.includes('thư viện') ||
+           transcript.includes('đến thư viện') ||
            transcript.includes('trang chủ') ||
            transcript.includes('danh sách theo dõi') ||
            transcript.startsWith('tìm ') ||

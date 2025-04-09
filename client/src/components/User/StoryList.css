@@ -1,0 +1,17 @@
+.story-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .story-item {
+    width: 200px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .story-item img {
+    width: 100%;
+    height: auto;
+  }
