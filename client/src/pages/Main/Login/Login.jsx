@@ -32,8 +32,8 @@ function Login() {
         setErrorMessage("Login success!");
         // Lưu thông tin vào localStorage
         localStorage.setItem('accountId', account._id); // Lưu ID tài khoản
-        localStorage.setItem('username', user.username);
-        localStorgae.setItem('userId', user._id)
+        localStorage.setItem('username', account.username);
+        localStorage.setItem('userId', user._id)
          // Lưu tên đăng nhập
         history("/");
       } else {

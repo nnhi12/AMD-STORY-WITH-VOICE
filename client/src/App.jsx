@@ -14,6 +14,7 @@ import SearchPage from './pages/User/SearchResult/SearchResult';
 import UserInfo from './pages/User/UserInformation/UserInformationPage';
 import ForgotPassword from './pages/Main/ForgotPassword/ForgotPassword';
 import Payment from './pages/User/Payment/Payment';
+import StoryList from './components/User/StoryList';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
           <Route path="/userinfo" element={<UserInfo />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/colab-recommend" element={<StoryList />} />
         </Routes>
       </BrowserRouter>
     </div>
