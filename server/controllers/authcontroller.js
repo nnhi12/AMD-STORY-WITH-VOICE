@@ -40,7 +40,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/register", async (req, res) => {
     try {
-        const { username, password, email } = req.body;
+        const { username, password, email, age, gender } = req.body;
 
         // Kiểm tra xem username đã tồn tại chưa
         const existingAccount = await accountModel.findOne({ username });
@@ -54,7 +54,17 @@ router.post("/register", async (req, res) => {
             return res.status(400).json({ message: "Email already exists. Please use a different email." });
         }
 
-        // Nếu username và email chưa tồn tại, tiến hành tạo tài khoản và user mới
+        // Kiểm tra age là số hợp lệ
+        if (typeof age !== "number" || age < 0) {
+            return res.status(400).json({ message: "Invalid age provided." });
+        }
+
+        // Kiểm tra gender hợp lệ
+        if (!["male", "female", "other"].includes(gender)) {
+            return res.status(400).json({ message: "Invalid gender provided." });
+        }
+
+        // Tạo tài khoản mới
         const account = await accountModel.create({
             username,
             password,
@@ -62,10 +72,13 @@ router.post("/register", async (req, res) => {
             status: false,
         });
 
+        // Tạo user mới với age và gender
         const user = await userModel.create({
             account: account._id,
             fullname: "",
             email,
+            age,
+            gender,
         });
 
         res.json({ account, user });

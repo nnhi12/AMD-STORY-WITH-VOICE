@@ -11,11 +11,13 @@ function Register() {
     username: "",
     password: "",
     email: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    age: "", // Thêm age
+    gender: "other" // Mặc định là 'other'
   });
-  const [message, setMessage] = useState(""); // Thông báo đăng ký
-  const [showPassword, setShowPassword] = useState(false); // Toggle password visibility
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Toggle confirm password visibility
+  const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,64 +29,66 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Kiểm tra nếu có trường nào bỏ trống
-    if (!createForm.username || !createForm.email || !createForm.password || !createForm.confirmPassword) {
+    if (!createForm.username || !createForm.email || !createForm.password || !createForm.confirmPassword || !createForm.age) {
       setMessage("Please fill in all fields.");
       return;
     }
-  
+
     // Kiểm tra độ dài mật khẩu
     if (createForm.password.length < 8) {
       setMessage("Password must be at least 8 characters long.");
       return;
     }
-  
+
     // Kiểm tra confirm password
     if (createForm.password !== createForm.confirmPassword) {
       setMessage("Passwords do not match. Please try again.");
       return;
     }
-  
+
+    // Kiểm tra age là số hợp lệ
+    if (isNaN(createForm.age) || createForm.age < 0) {
+      setMessage("Please enter a valid age.");
+      return;
+    }
+
     try {
       const response = await axios.post(`${API_URL}/register`, {
         username: createForm.username,
         password: createForm.password,
         email: createForm.email,
+        age: parseInt(createForm.age), // Chuyển age thành số nguyên
+        gender: createForm.gender,
       });
-  
+
       console.log("Account created:", response.data);
       setMessage("Registration successful! Redirecting to login page...");
-  
-      // Chuyển hướng về trang đăng nhập sau khi đăng ký thành công
+
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } catch (error) {
       console.error("Error registering account:", error);
-  
-      // Kiểm tra nếu lỗi có phản hồi từ backend
       if (error.response && error.response.data && error.response.data.message) {
-        setMessage(error.response.data.message); // Hiển thị thông báo lỗi từ backend
+        setMessage(error.response.data.message);
       } else {
-        setMessage("Registration failed. Please try again."); // Thông báo lỗi mặc định nếu không có phản hồi từ backend
+        setMessage("Registration failed. Please try again.");
       }
     }
   };
-  
 
-  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(prevState => !prevState);
   };
 
-  // Toggle confirm password visibility
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(prevState => !prevState);
   };
 
   useVoiceControl("", "", "");
-  
+
   return (
     <div className="body-regis">
       <div className="signup-container">
@@ -117,6 +121,30 @@ function Register() {
                   onChange={handleChange}
                   required
                 />
+              </div>
+              <div className="regis-form-group">
+                <label>AGE</label>
+                <input
+                  type="number"
+                  name="age"
+                  value={createForm.age}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                />
+              </div>
+              <div className="regis-form-group">
+                <label>GENDER</label>
+                <select
+                  name="gender"
+                  value={createForm.gender}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               <div className="regis-form-group">
                 <label>PASSWORD</label>
@@ -166,10 +194,10 @@ function Register() {
                   </div>
                 )}
               </div>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="register-button"
-                disabled={createForm.password.length < 8} // Disable nếu mật khẩu < 8 ký tự
+                disabled={createForm.password.length < 8}
               >
                 REGISTER
               </button>

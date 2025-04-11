@@ -8,18 +8,19 @@ function UserInfo() {
         username: "",
         password: "",
         email: "",
+        gender: "other", // Mặc định là 'other'
         fullname: "",
-        age: "", // Thêm age vào state
+        age: "",
         image: null,
     });
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [file, setFile] = useState(null); // State để lưu file
+    const [file, setFile] = useState(null);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
-                const accountId = localStorage.getItem("accountId"); // Giả sử account ID được lưu trong localStorage
+                const accountId = localStorage.getItem("accountId");
                 const response = await axios.get(`${API_URL}/userinfo/${accountId}`);
                 setUserInfo(response.data);
             } catch (error) {
@@ -46,10 +47,11 @@ function UserInfo() {
             formData.append("email", userInfo.email);
             formData.append("password", userInfo.password);
             formData.append("age", userInfo.age);
+            formData.append("gender", userInfo.gender); // Gửi gender
             if (file) {
-                formData.append("image", file); // Đính kèm file nếu có
+                formData.append("image", file);
             }
-    
+
             await axios.put(`${API_URL}/userinfo/${accountId}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -64,12 +66,12 @@ function UserInfo() {
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
-            setFile(selectedFile); // Lưu file được chọn vào state
+            setFile(selectedFile);
             const reader = new FileReader();
             reader.onloadend = () => {
-                setUserInfo({ ...userInfo, image: reader.result }); // Lưu ảnh vào state để hiển thị
+                setUserInfo({ ...userInfo, image: reader.result });
             };
-            reader.readAsDataURL(selectedFile); // Chuyển đổi file sang URL dữ liệu
+            reader.readAsDataURL(selectedFile);
         }
     };
 
@@ -88,11 +90,11 @@ function UserInfo() {
                             accept="image/*"
                             onChange={handleFileChange}
                             disabled={!isEditing}
-                            style={{ marginTop: '10px' }} 
+                            style={{ marginTop: '10px' }}
                         />
                         {userInfo.image && (
                             <img
-                                src={userInfo.image.startsWith("data:image/") ? userInfo.image : `data:image/jpeg;base64,${userInfo.image}`} 
+                                src={userInfo.image.startsWith("data:image/") ? userInfo.image : `data:image/jpeg;base64,${userInfo.image}`}
                                 alt="profile"
                             />
                         )}
@@ -148,6 +150,19 @@ function UserInfo() {
                             onChange={handleChange}
                             readOnly={!isEditing}
                         />
+                    </div>
+                    <div className="profile-form-group">
+                        <label>Giới tính</label>
+                        <select
+                            name="gender"
+                            value={userInfo.gender || "other"}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                        >
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                            <option value="other">Khác</option>
+                        </select>
                     </div>
                     <div className="profile-button-group">
                         {isEditing ? (

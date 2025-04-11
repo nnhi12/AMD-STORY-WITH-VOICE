@@ -27,6 +27,7 @@ router.get("/userinfo/:accountId", async (req, res) => {
             password: account.password, // Nếu mật khẩu không được mã hóa
             email: user.email,
             age: user.age,
+            gender: user.gender,
             fullname: user.fullname,
             image: user.image ? user.image.toString('base64') : null, // Trả về hình ảnh ở dạng Base64
         });
@@ -38,7 +39,7 @@ router.get("/userinfo/:accountId", async (req, res) => {
 
 router.put("/userinfo/:accountId", upload.single("image"), async (req, res) => {
     const accountId = req.params.accountId;
-    const { fullname, email, password, age } = req.body;
+    const { fullname, email, gender, password, age } = req.body;
     const image = req.file ? req.file.buffer : undefined; // Lưu trực tiếp dưới dạng Buffer
 
     try {
@@ -49,7 +50,7 @@ router.put("/userinfo/:accountId", upload.single("image"), async (req, res) => {
 
         const user = await userModel.findOneAndUpdate(
             { account: accountId },
-            { fullname, email, password, age, image }, // Lưu Buffer vào cơ sở dữ liệu
+            { fullname, email, password, gender, age, image }, // Lưu Buffer vào cơ sở dữ liệu
             { new: true }
         );
 
