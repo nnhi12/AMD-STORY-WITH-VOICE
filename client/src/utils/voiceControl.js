@@ -276,6 +276,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             handleReadChapter,
             handleStopReading,
             handleContinueReading,
+            handleReadFromBeginning,
             scrollToComment,
             setCommentText,
             handleCommentSubmit,
@@ -306,7 +307,12 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             } else {
               speak('Bạn đang ở đầu chương. Hãy nói "nghe truyện" để bắt đầu.');
             }
-          } else if (transcript.includes('bình luận truyện')) {
+          } else if (transcript.includes('đọc lại từ đầu')) {
+            console.log('Triggering handleReadFromBeginning');
+            speak('Đang đọc lại từ đầu chương');
+            handleReadFromBeginning();
+          }
+          else if (transcript.includes('bình luận truyện')) {
             speak('Đang mở khung bình luận', scrollToComment);
           } else if (transcript.startsWith('nhập ')) {
             const text = transcript.replace('nhập ', '');
