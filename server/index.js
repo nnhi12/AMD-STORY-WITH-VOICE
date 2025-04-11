@@ -15,6 +15,7 @@ const readingprogressRouter = require('./controllers/readingprogresscontroller.j
 const vipRouter = require('./controllers/vipcontroller.js');
 const storyVoiceRouter = require('./controllers/voicecontroller.js');
 const recommendationRoutes = require('./routes/recommendation');
+const statisticalRoutes = require('./routes/statistical');
 const app = express();
 
 app.use(express.json());
@@ -54,6 +55,8 @@ app.use("/", vipRouter);
 app.get('/',storyVoiceRouter);
 
 app.use('/recommend', recommendationRoutes);
+
+app.use('/statistical', statisticalRoutes);
 
 app.listen(3001, '0.0.0.0', () => {
     console.log('Success!');

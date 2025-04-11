@@ -14,7 +14,9 @@ const storySchema = new mongoose.Schema({
     user_follow: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     date_opened: Date,
     date_closed: Date,
-    fee: Number
+    fee: Number,
+    age_range: { type: String, enum: ['<13', '13-17', '18+', '21+'], default: '18+' }, // Thêm trường age_range
+    gender_preference: { type: String, enum: ['male', 'female', 'both'], default: 'both' } // Thêm trường gender_preference
 }, { versionKey: false }
 );
 

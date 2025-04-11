@@ -81,3 +81,49 @@
     background-color: #d32f2f;
   }
   
+/* Tùy chỉnh select của gender */
+.profile-form-group select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 16px;
+  color: #333;
+  appearance: none; /* Xóa giao diện mặc định của trình duyệt */
+  background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover và focus */
+.profile-form-group select:hover,
+.profile-form-group select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+  outline: none;
+}
+
+/* Khi disabled */
+.profile-form-group select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #999;
+}
+
+/* Tùy chỉnh option */
+.profile-form-group select option {
+  padding: 10px;
+  background-color: #fff;
+  color: #333;
+}
+
+/* Đảm bảo label phù hợp */
+.profile-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}

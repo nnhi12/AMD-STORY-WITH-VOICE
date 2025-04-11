@@ -187,6 +187,13 @@ function ViewChapter() {
     }
   };
 
+  const handleReadFromBeginning = () => {
+    console.log('handleReadFromBeginning called');
+    setCurrentParagraphIndex(0); // Đặt lại index về 0
+    localStorage.setItem('currentParagraphIndex', 0); // Cập nhật localStorage
+    handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))); 
+  };
+
   const handleCommentSubmit = () => {
     if (!commentText || commentText.trim() === '') {
       console.log('Bình luận rỗng, không thể đăng');
@@ -214,6 +221,7 @@ function ViewChapter() {
     handleReadChapter,
     handleStopReading,
     handleContinueReading,
+    handleReadFromBeginning,
     speak,
     scrollToComment: () => commentSectionRef.current?.scrollToInput(),
     setCommentText,

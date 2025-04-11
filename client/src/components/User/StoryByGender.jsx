@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
 import './StoryList.css';
-import { API_URL } from "../../env.js";
+import { Link } from 'react-router-dom';
+import { API_URL } from '../../env';
 import Header from '../../layouts/header/User/header.jsx';
 import Footer from '../../layouts/footer/User/footer.jsx';
 import Navbar from '../../components/User/navbar.jsx';
 
-const StoryList = () => {
+const StoryByGender = () => {
   const [stories, setStories] = useState([]);
   const userId = localStorage.getItem('userId');
 
@@ -18,11 +18,10 @@ const StoryList = () => {
         return;
       }
       try {
-        const response = await axios.get(`${API_URL}/recommend/${userId}`);
-        console.log('Stories from API:', response.data);
+        const response = await axios.get(`${API_URL}/recommend/by-gender/${userId}`);
         setStories(response.data);
       } catch (error) {
-        console.error('Error fetching stories:', error);
+        console.error('Error fetching stories by gender:', error);
       }
     };
 
@@ -35,9 +34,9 @@ const StoryList = () => {
       <Navbar />
       <main className="main-content">
         <div className="story-list">
-          <h2>Danh sách truyện gợi ý</h2>
+          <h2>Truyện phù hợp với giới tính</h2>
           {stories.length === 0 ? (
-            <p>Không có truyện nào để hiển thị.</p>
+            <p>Không có truyện nào phù hợp.</p>
           ) : (
             <div className="story-grid">
               {stories.map(story => (
@@ -67,4 +66,4 @@ const StoryList = () => {
   );
 };
 
-export default StoryList;
+export default StoryByGender;
