@@ -53,7 +53,7 @@ router.get('/by-category/:category', async (req, res) => {
   try {
     const category = req.params.category;
     const topStories = await storyModel
-      .find({ categories: category})
+      .find({ categories: category })
       .sort({ view: -1 }) // Sắp xếp theo lượt xem giảm dần
       .limit(5);
 
@@ -94,7 +94,7 @@ router.get('/by-age/:userId', async (req, res) => {
     }
 
     const stories = await storyModel
-      .find({ age_range: ageRange})
+      .find({ age_range: ageRange })
       .sort({ view: -1 })
       .limit(5);
 
@@ -124,7 +124,7 @@ router.get('/by-gender/:userId', async (req, res) => {
 
     const genderPreference = user.gender === 'male' ? 'male' : user.gender === 'female' ? 'female' : 'both';
     const stories = await storyModel
-      .find({ gender_preference: { $in: [genderPreference, 'both'] }})
+      .find({ gender_preference: { $in: [genderPreference, 'both'] } })
       .sort({ view: -1 })
       .limit(5);
 
@@ -142,5 +142,6 @@ router.get('/by-gender/:userId', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 module.exports = router;

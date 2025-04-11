@@ -18,6 +18,8 @@ import StoryList from './components/User/StoryList';
 import StoryByCategory from './components/User/StoryByCategory';
 import StoryByAge from './components/User/StoryByAge';
 import StoryByGender from './components/User/StoryByGender'
+import StoryForKids from './components/User/StoryForKids';
+import StoryByAgeInput from './components/User/StoryByAgeInput';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -43,6 +45,8 @@ function App() {
           <Route path="/colab-recommend" element={<StoryList />} />
           <Route path="/category/:category" element={<StoryByCategory />} />
           <Route path="/by-age" element={<StoryByAge />} />
+          <Route path="/for-kids" element={<StoryForKids />} />
+          <Route path="/by-age-input" element={<StoryByAgeInput />} />
           <Route path="/by-gender" element={<StoryByGender />} />
         </Routes>
       </BrowserRouter>

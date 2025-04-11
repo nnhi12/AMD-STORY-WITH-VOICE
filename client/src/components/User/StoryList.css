@@ -99,3 +99,38 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.age-input-form {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.age-input-form label {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.age-input-form input {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100px;
+}
+
+.age-input-form button {
+  padding: 8px 16px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.age-input-form button:hover {
+  background-color: #0056b3;
+}
