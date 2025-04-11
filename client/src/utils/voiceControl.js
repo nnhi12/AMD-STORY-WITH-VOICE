@@ -91,6 +91,62 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             speak("Vui lòng cung cấp tên truyện sau từ 'tìm'.");
           }
           return;
+        } else if ((
+          transcript.includes('truyện gợi ý') ||
+          transcript.includes('mở truyện gợi ý') ||
+          transcript.includes('xem truyện đề xuất') ||
+          transcript.includes('danh sách gợi ý') ||
+          transcript.includes('truyện được đề xuất')
+        )) {
+          speak("Đang chuyển đến danh sách truyện gợi ý.", () => navigate('/colab-recommend'));
+          return;
+        } else if ((
+          transcript.includes('truyện phù hợp với độ tuổi') ||
+            transcript.includes('truyện theo độ tuổi') ||
+            transcript.includes('mở truyện theo tuổi') ||
+            transcript.includes('xem truyện theo độ tuổi') ||
+            transcript.includes('truyện phân loại tuổi') ||
+            transcript.includes('danh sách truyện theo tuổi')
+          )) {
+          speak("Đang chuyển đến truyện theo độ tuổi.", () => navigate('/by-age'));
+          return;
+        } else if ((
+          transcript.includes('truyện dành cho thiếu nhi') ||
+            transcript.includes('truyện cho trẻ em') ||
+            transcript.includes('mở truyện trẻ em') ||
+            transcript.includes('xem truyện cho trẻ') ||
+            transcript.includes('truyện thiếu nhi') ||
+            transcript.includes('trẻ dưới 13 tuổi nên đọc truyện gì')
+          )) {
+          speak("Đang chuyển đến truyện dành cho trẻ em.", () => navigate('/for-kids'));
+          return;
+        } else if ((
+          transcript.includes('gợi ý truyện theo tuổi') ||
+          transcript.includes('tìm truyện theo tuổi nhập') ||
+          transcript.includes('truyện theo tuổi tự chọn'))) {
+          speak("Đang chuyển đến trang nhập độ tuổi.", () => navigate('/by-age-input'));
+          return;
+        } else if (transcript.includes('truyện phù hợp với giới tính')) {
+          speak("Đang chuyển đến truyện theo giới tính.", () => navigate('/by-gender'));
+          return;
+        } else if (transcript.startsWith('gợi ý truyện thể loại ')) {
+          const categoryName = transcript.replace('gợi ý truyện thể loại ', '').trim();
+          const fetchCategoryByName = async () => {
+            try {
+              const response = await axios.get(`${API_URL}/category-by-name`, {
+                params: { name: categoryName }
+              });
+              const matchedCategory = response.data;
+              speak(`Top 5 truyện hay nhất thể loại ${matchedCategory.name}`, () =>
+                navigate(`/category/${matchedCategory._id}`)
+              );
+            } catch (error) {
+              console.error('Error fetching category by name:', error);
+              speak(`Không tìm thấy thể loại ${genreName}.`);
+            }
+          };
+          fetchCategoryByName();
+          return;
         }
 
         if (transcript.startsWith('thể loại ') || transcript.startsWith('mở thể loại ')) {
@@ -103,7 +159,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
                 params: { name: genreName }
               });
               const matchedCategory = response.data;
-              speak(`Đang mở thể loại ${matchedCategory.name}`, () => 
+              speak(`Đang mở thể loại ${matchedCategory.name}`, () =>
                 navigate(`/classifiedbygenre/${matchedCategory._id}`)
               );
             } catch (error) {
@@ -150,17 +206,17 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         if (transcript.includes('theo dõi truyện') || transcript.includes('thêm vào danh sách theo dõi')) {
           const userId = localStorage.getItem("accountId");
           const currentStoryId = location.pathname.split('/storyinfo/')[1];
-      
+
           if (!userId) {
             speak("Bạn cần đăng nhập để theo dõi truyện.");
             return;
           }
-      
+
           if (!currentStoryId) {
             speak("Không tìm thấy truyện để theo dõi.");
             return;
           }
-      
+
           const followStory = async () => {
             try {
               const response = await axios.post(`${API_URL}/add-to-follow-list`, {
@@ -215,7 +271,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           // Lệnh "đọc truyện xxx"
           if (transcript.startsWith('đọc truyện ')) {
             const storyName = transcript.replace('đọc truyện ', '').trim();
-            const matchedBook = books.find(book => 
+            const matchedBook = books.find(book =>
               book.name.toLowerCase().includes(storyName)
             );
 
@@ -247,10 +303,10 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               }
               return text;
             };
-    
+
             const chapterName = normalizeChapterName(transcript);
             console.log('Chapter name gửi đi:', chapterName);
-    
+
             const findChapter = async () => {
               try {
                 const response = await axios.get(
@@ -337,27 +393,49 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
 
   const handleCommand = (transcript) => {
     return transcript.includes('truyện hay nhất') ||
-           transcript.includes('đến thư viện') ||
-           transcript.includes('trang chủ') ||
-           transcript.includes('danh sách theo dõi') ||
-           transcript.startsWith('tìm ') ||
-           transcript.startsWith('thể loại ') || // Thêm lệnh tìm thể loại
-           transcript.startsWith('mở thể loại ') ||
-           transcript.includes('đọc từ đầu') ||
-           transcript.includes('chương mới nhất') ||
-           transcript.includes('đọc tiếp') ||
-           transcript.includes('chương trước') ||
-           transcript.includes('chương tiếp') ||
-           transcript.includes('danh sách chương') ||
-           transcript.includes('nghe truyện') ||
-           transcript.includes('dừng nghe') ||
-           transcript.includes('tiếp tục nghe') ||
-           transcript.includes('bình luận truyện') ||
-           transcript.startsWith('nhập ') ||
-           transcript.includes('đang bình luận') ||
-           transcript.includes('thêm vào danh sách đọc') ||
-           transcript.includes('theo dõi truyện') || 
-           transcript.includes('thêm vào danh sách theo dõi');
+      transcript.includes('đến thư viện') ||
+      transcript.includes('trang chủ') ||
+      transcript.includes('danh sách theo dõi') ||
+      transcript.startsWith('tìm ') ||
+      transcript.startsWith('thể loại ') || // Thêm lệnh tìm thể loại
+      transcript.startsWith('mở thể loại ') ||
+      transcript.includes('đọc từ đầu') ||
+      transcript.includes('chương mới nhất') ||
+      transcript.includes('đọc tiếp') ||
+      transcript.includes('chương trước') ||
+      transcript.includes('chương tiếp') ||
+      transcript.includes('danh sách chương') ||
+      transcript.includes('nghe truyện') ||
+      transcript.includes('dừng nghe') ||
+      transcript.includes('tiếp tục nghe') ||
+      transcript.includes('bình luận truyện') ||
+      transcript.startsWith('nhập ') ||
+      transcript.includes('đang bình luận') ||
+      transcript.includes('thêm vào danh sách đọc') ||
+      transcript.includes('theo dõi truyện') ||
+      transcript.includes('thêm vào danh sách theo dõi') ||
+      transcript.includes('truyện gợi ý') ||
+      transcript.includes('truyện phù hợp với độ tuổi') ||
+      transcript.includes('truyện dành cho thiếu nhi') ||
+      transcript.includes('gợi ý truyện theo tuổi') ||
+      transcript.includes('truyện phù hợp với giới tính') ||
+      transcript.startsWith('gợi ý truyện thể loại ') ||
+      transcript.includes('mở truyện gợi ý') ||
+      transcript.includes('xem truyện đề xuất') ||
+      transcript.includes('danh sách gợi ý') ||
+      transcript.includes('truyện được đề xuất') ||
+      transcript.includes('truyện theo độ tuổi') ||
+      transcript.includes('mở truyện theo tuổi') ||
+      transcript.includes('xem truyện theo độ tuổi') |
+      transcript.includes('truyện phân loại tuổi') ||
+      transcript.includes('danh sách truyện theo tuổi') ||
+      transcript.includes('truyện cho trẻ em') ||
+      transcript.includes('mở truyện trẻ em') ||
+      transcript.includes('xem truyện cho trẻ') ||
+      transcript.includes('truyện thiếu nhi') ||
+      transcript.includes('trẻ dưới 13 tuổi nên đọc truyện gì') ||
+      transcript.includes('tìm truyện theo tuổi nhập') ||
+      transcript.includes('truyện theo tuổi tự chọn');
   };
 
   const submitComment = async () => {
@@ -400,7 +478,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       }
       const data = await response.json();
       if (data.length === 1) {
-        speak(`Đang chuyển đến truyện ${data[0].name}`, () => 
+        speak(`Đang chuyển đến truyện ${data[0].name}`, () =>
           navigate(`/storyinfo/${data[0]._id}`));
       } else {
         speak(`Đang hiển thị danh sách tìm kiếm.`, () =>
