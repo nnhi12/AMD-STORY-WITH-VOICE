@@ -7,6 +7,7 @@ import Header from '../../layouts/header/User/header.jsx';
 import Footer from '../../layouts/footer/User/footer.jsx';
 import Navbar from '../../components/User/navbar.jsx';
 
+import useVoiceControl from '../../utils/voiceControl.js';
 const StoryByAgeInput = () => {
   const [age, setAge] = useState(''); // Lưu tuổi người dùng nhập
   const [stories, setStories] = useState([]);
@@ -38,6 +39,8 @@ const StoryByAgeInput = () => {
     e.preventDefault();
     fetchStories();
   };
+
+  useVoiceControl("", "", "");
 
   return (
     <div className="page-container">

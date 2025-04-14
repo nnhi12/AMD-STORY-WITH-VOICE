@@ -5,9 +5,12 @@ import Navbar from '../../../components/User/navbar.jsx';
 import ListStory from '../../../components/User/ListHostStory.jsx';
 import ListGenre from '../../../components/User/ListGenre.jsx';
 import '../../../components/User/homepage.css';
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 
-const TopHotStory = () => (
+const TopHotStory = () => {
+  useVoiceControl("", "", "");
+  return (
   <div className="u-main-page">
     <Header />
     <Navbar />
@@ -22,7 +25,7 @@ const TopHotStory = () => (
         </div>
       </div>
     <Footer />
-  </div>
-);
+  </div>)
+};
 
 export default TopHotStory;

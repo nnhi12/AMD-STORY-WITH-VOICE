@@ -101,7 +101,7 @@ const StoryInfo = () => {
     handleContinueReading,
   };
 
-  useVoiceControl({ chapters: chapterList, storyId, callbacks });
+  useVoiceControl({ chapters: chapterList, storyId, callbacks, story});
 
   if (!story) {
     return <div>Loading...</div>;

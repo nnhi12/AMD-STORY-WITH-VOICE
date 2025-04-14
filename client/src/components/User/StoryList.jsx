@@ -6,6 +6,7 @@ import { API_URL } from "../../env.js";
 import Header from '../../layouts/header/User/header.jsx';
 import Footer from '../../layouts/footer/User/footer.jsx';
 import Navbar from '../../components/User/navbar.jsx';
+import useVoiceControl from '../../utils/voiceControl.js';
 
 const StoryList = () => {
   const [stories, setStories] = useState([]);
@@ -28,6 +29,8 @@ const StoryList = () => {
 
     fetchStories();
   }, [userId]);
+
+  useVoiceControl("", "", "");
 
   return (
     <div className="page-container">

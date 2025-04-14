@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getRecommendedStories } from '../../utils/api';
 import './RecommendStories.css';
+import useVoiceControl from '../../utils/voiceControl.js';
 
 const RecommendedStories = ({ storyId }) => {
   const [stories, setStories] = useState([]);
@@ -27,6 +28,8 @@ const RecommendedStories = ({ storyId }) => {
   if (loading) return <div>Đang tải...</div>;
   if (error) return <div>{error}</div>;
 
+  useVoiceControl("", "", "");
+  
   return (
     <div className="recommended-stories">
       <h2>Bạn cũng nên thử đọc</h2>

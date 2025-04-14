@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from "../env";
 
-const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId }) => {
+const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId, books }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const recognitionRef = useRef(null);
@@ -70,6 +70,113 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         console.log('VoiceControl nghe được:', transcript);
         const isSpeaking = JSON.parse(localStorage.getItem('is_Speaking')) || false;
         const currentParagraphIndex = JSON.parse(localStorage.getItem('currentParagraphIndex')) || false;
+        
+        if (location.pathname === '/' && transcript.includes('đọc danh sách truyện')) {
+          const readStoryList = async () => {
+            try {
+              const response = await axios.get(`${API_URL}/stories`);
+              const stories = response.data;
+              console.log("Dữ liệu truyện nhận được:", stories); // Kiểm tra dữ liệu
+        
+              if (!stories || stories.length === 0) {
+                speak("Hiện tại không có truyện nào trong danh sách.");
+                return;
+              }
+        
+              localStorage.setItem('is_Speaking', JSON.stringify(true)); // Đặt trạng thái
+              speak("Danh sách các truyện hiện có là:", () => {
+                let index = 0;
+                const readNextStory = () => {
+                  if (index < stories.length && JSON.parse(localStorage.getItem('is_Speaking'))) {
+                    const story = stories[index];
+                    if (story.name) {
+                      speak(story.name, () => {
+                        console.log(`Đã đọc truyện: ${story.name}`);
+                        index++;
+                        readNextStory();
+                      });
+                    } else {
+                      console.warn(`Truyện tại index ${index} không có tên:`, story);
+                      index++;
+                      readNextStory();
+                    }
+                  } else {
+                    localStorage.setItem('is_Speaking', JSON.stringify(false));
+                    console.log("Hoàn thành đọc danh sách truyện.");
+                    speak("Đã đọc xong danh sách truyện.");
+                  }
+                };
+                readNextStory();
+              });
+            } catch (error) {
+              console.error('Lỗi khi lấy danh sách truyện:', error);
+              speak("Có lỗi xảy ra khi lấy danh sách truyện.");
+            }
+          };
+          readStoryList();
+          return;
+        }
+
+        if (location.pathname === '/library' && transcript.startsWith('xóa truyện ')) {
+          if (!userIdRef.current) {
+            speak("Bạn cần đăng nhập để xóa truyện khỏi thư viện.");
+            return;
+          }
+
+          const storyName = transcript.replace('xóa truyện ', '').trim();
+          if (!storyName) {
+            speak("Vui lòng cung cấp tên truyện để xóa.");
+            return;
+          }
+
+          if (!books || books.length === 0) {
+            speak("Thư viện của bạn hiện không có truyện nào.");
+            return;
+          }
+
+          const matchedBook = books.find(book =>
+            book.name.toLowerCase().includes(storyName)
+          );
+
+          if (!matchedBook) {
+            speak(`Không tìm thấy truyện ${storyName} trong thư viện của bạn.`);
+            return;
+          }
+
+          // Hiển thị SweetAlert để xác nhận
+          Swal.fire({
+            title: 'Bạn chắc chắn muốn xóa?',
+            text: `Truyện ${matchedBook.name} sẽ bị xóa khỏi thư viện.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Có, xóa nó!',
+            cancelButtonText: 'Không, giữ lại',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              axios
+                .post(`${API_URL}/remove-from-reading-list`, {
+                  accountId: userIdRef.current,
+                  storyId: matchedBook._id,
+                })
+                .then((response) => {
+                  if (response.data.message) {
+                    speak(`Đã xóa truyện ${matchedBook.name} khỏi thư viện.`);
+                    // Gọi callback để cập nhật danh sách (nếu có)
+                    if (callbacks && callbacks.onBookRemoved) {
+                      callbacks.onBookRemoved(matchedBook._id);
+                    }
+                  }
+                })
+                .catch((error) => {
+                  console.error('Lỗi khi xóa truyện:', error);
+                  speak("Có lỗi xảy ra khi xóa truyện.");
+                });
+            } else {
+              speak(`Đã hủy xóa truyện ${matchedBook.name}.`);
+            }
+          });
+          return;
+        }
 
         if (transcript.includes('trang chủ')) {
           speak("Đang quay lại trang chủ.", () => navigate('/'));
@@ -287,6 +394,41 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         }
 
         if (location.pathname.startsWith('/storyinfo') && chapters && storyId) {
+          if (transcript.includes('đọc thông tin trang')) {
+            const fetchStoryInfo = async () => {
+              try {
+                const response = await axios.get(`${API_URL}/stories/${storyId}`);
+                const story = response.data;
+        
+                if (story) {
+                  const storyInfo = `
+                    Tên truyện: ${story.name}. 
+                    Tác giả: ${story.author || 'Không rõ tác giả'}. 
+                    Ngày tạo: ${new Date(story.created_at).toLocaleString('vi-VN')}. 
+                    Ngày cập nhật: ${new Date(story.updated_at).toLocaleString('vi-VN')}. 
+                    Trạng thái: ${story.status ? 'Đã hoàn thành' : 'Chưa hoàn thành'}. 
+                    Tóm tắt: ${story.description || 'Không có tóm tắt'}.
+                  `;
+                  speak(storyInfo);
+                } else {
+                  speak("Không tìm thấy thông tin truyện để đọc.");
+                }
+              } catch (error) {
+                console.error('Lỗi khi lấy thông tin truyện:', error);
+                speak("Có lỗi xảy ra khi lấy thông tin truyện.");
+              }
+            };
+            fetchStoryInfo();
+            return;
+          }
+  
+          // Xử lý lệnh "dừng lại" để dừng đọc
+          if (transcript.includes('dừng lại')) {
+            stopSpeaking();
+            speak("Đã dừng đọc thông tin.");
+            return;
+          }
+
           if (transcript.includes("đọc từ đầu")) {
             speak("Đang mở chương đầu tiên...", handleReadFromStart);
           } else if (transcript.includes("chương mới nhất")) {
@@ -392,7 +534,11 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
   }, [navigate, isChapterPage, chapters, storyId, chapterData, currentParagraphIndex, callbacks]);
 
   const handleCommand = (transcript) => {
-    return transcript.includes('truyện hay nhất') ||
+    return transcript.includes('đọc thông tin trang') ||
+    transcript.includes('đọc danh sách truyện') ||
+    transcript.includes('dừng lại') ||
+    transcript.startsWith('xóa truyện ') ||
+    transcript.includes('truyện hay nhất') ||
       transcript.includes('đến thư viện') ||
       transcript.includes('trang chủ') ||
       transcript.includes('danh sách theo dõi') ||
@@ -466,6 +612,11 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       console.error('Lỗi khi đăng bình luận:', error);
       speak('Có lỗi xảy ra khi đăng bình luận');
     }
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    localStorage.setItem('is_Speaking', JSON.stringify(false));
   };
 
   const fetchStoryIdByName = async (storyName) => {

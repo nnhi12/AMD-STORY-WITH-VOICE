@@ -7,6 +7,8 @@ import Header from '../../layouts/header/User/header.jsx';
 import Footer from '../../layouts/footer/User/footer.jsx';
 import Navbar from '../../components/User/navbar.jsx';
 
+import useVoiceControl from '../../utils/voiceControl.js';
+
 const StoryByGender = () => {
   const [stories, setStories] = useState([]);
   const userId = localStorage.getItem('userId');
@@ -27,7 +29,9 @@ const StoryByGender = () => {
 
     fetchStories();
   }, [userId]);
-
+ 
+  useVoiceControl("", "", "");
+  
   return (
     <div className="page-container">
       <Header />
