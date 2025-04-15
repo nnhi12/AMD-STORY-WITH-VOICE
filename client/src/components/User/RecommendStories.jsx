@@ -25,10 +25,12 @@ const RecommendedStories = ({ storyId }) => {
     fetchStories();
   }, [storyId]);
 
+  
+  useVoiceControl("", "", "");
+
   if (loading) return <div>Đang tải...</div>;
   if (error) return <div>{error}</div>;
 
-  useVoiceControl("", "", "");
   
   return (
     <div className="recommended-stories">
