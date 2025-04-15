@@ -40,7 +40,7 @@ const StoryByAgeInput = () => {
     fetchStories();
   };
 
-  useVoiceControl("", "", "");
+  const { isListening } = useVoiceControl({ setAge, fetchStories, setStories });
 
   return (
     <div className="page-container">

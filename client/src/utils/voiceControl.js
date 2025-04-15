@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from "../env";
 
-const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId}) => {
+const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId, setAge, fetchStories, setStories}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const recognitionRef = useRef(null);
@@ -235,6 +235,45 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           };
         
           fetchStoryByName();
+          return;
+        }
+
+        if (location.pathname === '/by-age-input' && transcript.startsWith('nhập tuổi ')) {
+          const ageStr = transcript.replace('nhập tuổi ', '').trim();
+          const age = parseInt(ageStr, 10);
+
+          if (isNaN(age) || age < 0) {
+            speak('Vui lòng nói một số tuổi hợp lệ.');
+            return;
+          }
+
+          if (setAge && setStories) {
+            // Cập nhật giá trị input tuổi trên giao diện
+            setAge(age.toString());
+            speak(`Đã nhập tuổi ${age}. Đang tìm truyện.`);
+
+            // Gọi API trực tiếp và cập nhật danh sách truyện
+            axios
+              .get(`${API_URL}/statistical/by-age`, {
+                params: { age },
+              })
+              .then((response) => {
+                const stories = response.data;
+                console.log('API trả về danh sách truyện:', stories);
+                setStories(stories); // Cập nhật danh sách truyện để hiển thị trên giao diện
+                speak(`Đã tìm thấy ${stories.length} truyện phù hợp với độ tuổi ${age}.`);
+              })
+              .catch((error) => {
+                console.error('Lỗi khi tìm truyện theo tuổi:', error);
+                if (error.response?.status === 400) {
+                  speak('Tuổi không hợp lệ.');
+                } else {
+                  speak('Có lỗi khi tìm truyện. Vui lòng thử lại.');
+                }
+              });
+          } else {
+            speak('Không thể cập nhật giao diện. Vui lòng thử lại.');
+          }
           return;
         }
 
