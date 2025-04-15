@@ -29,20 +29,20 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
   };
 
   const pageNameMap = {
-    '/': 'trang chủ',
-    '/register': 'trang đăng ký',
-    '/login': 'trang đăng nhập',
+    '/': 'chủ',
+    '/register': 'đăng ký',
+    '/login': 'đăng nhập',
     '/library': 'thư viện',
     '/tophot': 'truyện hot nhất',
     '/favpage': 'danh sách truyện theo dõi',
-    '/aboutus': 'trang giới thiệu',
+    '/aboutus': 'giới thiệu',
     '/userinfo': 'thông tin người dùng',
-    '/payment': 'trang thanh toán',
-    '/forgot-password': 'trang quên mật khẩu',
+    '/payment': 'thanh toán',
+    '/forgot-password': 'quên mật khẩu',
     '/colab-recommend': 'truyện gợi ý',
     '/by-age': 'truyện theo độ tuổi',
     '/for-kids': 'truyện dành cho trẻ em',
-    '/by-age-input': 'trang nhập độ tuổi',
+    '/by-age-input': 'nhập độ tuổi',
     '/by-gender': 'truyện theo giới tính',
   };
 
@@ -289,7 +289,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         } else if (transcript.includes('danh sách theo dõi')) {
           speak("Đang chuyển đến danh sách truyện bạn theo dõi.", () => navigate('/favpage'));
           return;
-        } else if (transcript.startsWith('tìm ')) {
+        } else if (transcript.startsWith('tìm ') || transcript.startsWith('mở ')) {
           const storyName = transcript.substring(4).trim();
           if (storyName) {
             speak(`Đang tìm truyện ${storyName}`, () => fetchStoryIdByName(storyName));
@@ -642,6 +642,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       transcript.includes('trang chủ') ||
       transcript.includes('danh sách theo dõi') ||
       transcript.startsWith('tìm ') ||
+      transcript.startsWith('mở ') ||
       transcript.startsWith('thể loại ') || // Thêm lệnh tìm thể loại
       transcript.startsWith('mở thể loại ') ||
       transcript.includes('đọc từ đầu') ||
