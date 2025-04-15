@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from "../env";
 
-const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId, books }) => {
+const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const recognitionRef = useRef(null);
@@ -27,6 +27,48 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     if (callback) utterance.onend = callback;
     synth.speak(utterance);
   };
+
+  const pageNameMap = {
+    '/': 'trang chủ',
+    '/register': 'trang đăng ký',
+    '/login': 'trang đăng nhập',
+    '/library': 'thư viện',
+    '/tophot': 'truyện hot nhất',
+    '/favpage': 'danh sách truyện theo dõi',
+    '/aboutus': 'trang giới thiệu',
+    '/userinfo': 'thông tin người dùng',
+    '/payment': 'trang thanh toán',
+    '/forgot-password': 'trang quên mật khẩu',
+    '/colab-recommend': 'truyện gợi ý',
+    '/by-age': 'truyện theo độ tuổi',
+    '/for-kids': 'truyện dành cho trẻ em',
+    '/by-age-input': 'trang nhập độ tuổi',
+    '/by-gender': 'truyện theo giới tính',
+  };
+
+  // Thông báo khi chuyển trang
+  useEffect(() => {
+    const getPageName = () => {
+      // Kiểm tra các trường hợp đặc biệt trước (có tham số động)
+      if (location.pathname.startsWith('/storyinfo/')) {
+        return 'thông tin truyện';
+      } else if (location.pathname.startsWith('/stories/') && location.pathname.includes('/chapters/')) {
+        return 'nội dung chương';
+      } else if (location.pathname.startsWith('/classifiedbygenre/')) {
+        return 'truyện theo thể loại';
+      } else if (location.pathname.startsWith('/category/')) {
+        return 'truyện theo danh mục';
+      } else if (location.pathname.startsWith('/classifiedbychapter?')) {
+        return 'truyện theo tổng chương';
+      } else {
+        // Kiểm tra các đường dẫn tĩnh trong pageNameMap
+        return pageNameMap[location.pathname] || 'trang không xác định';
+      }
+    };
+
+    const pageName = getPageName();
+    speak(`Bạn đang ở trang ${pageName}`);
+  }, [location.pathname]);
 
   useEffect(() => {
     nextIdRef.current = nextId;
@@ -118,63 +160,81 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         }
 
         if (location.pathname === '/library' && transcript.startsWith('xóa truyện ')) {
-          if (!userIdRef.current) {
+          if (!localStorage.getItem('accountId')) {
             speak("Bạn cần đăng nhập để xóa truyện khỏi thư viện.");
             return;
           }
-
+        
           const storyName = transcript.replace('xóa truyện ', '').trim();
           if (!storyName) {
             speak("Vui lòng cung cấp tên truyện để xóa.");
             return;
           }
-
-          if (!books || books.length === 0) {
-            speak("Thư viện của bạn hiện không có truyện nào.");
-            return;
-          }
-
-          const matchedBook = books.find(book =>
-            book.name.toLowerCase().includes(storyName)
-          );
-
-          if (!matchedBook) {
-            speak(`Không tìm thấy truyện ${storyName} trong thư viện của bạn.`);
-            return;
-          }
-
-          // Hiển thị SweetAlert để xác nhận
-          Swal.fire({
-            title: 'Bạn chắc chắn muốn xóa?',
-            text: `Truyện ${matchedBook.name} sẽ bị xóa khỏi thư viện.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Có, xóa nó!',
-            cancelButtonText: 'Không, giữ lại',
-          }).then((result) => {
-            if (result.isConfirmed) {
-              axios
-                .post(`${API_URL}/remove-from-reading-list`, {
-                  accountId: userIdRef.current,
-                  storyId: matchedBook._id,
-                })
-                .then((response) => {
-                  if (response.data.message) {
-                    speak(`Đã xóa truyện ${matchedBook.name} khỏi thư viện.`);
-                    // Gọi callback để cập nhật danh sách (nếu có)
-                    if (callbacks && callbacks.onBookRemoved) {
-                      callbacks.onBookRemoved(matchedBook._id);
-                    }
-                  }
-                })
-                .catch((error) => {
-                  console.error('Lỗi khi xóa truyện:', error);
-                  speak("Có lỗi xảy ra khi xóa truyện.");
-                });
-            } else {
-              speak(`Đã hủy xóa truyện ${matchedBook.name}.`);
+        
+          const fetchStoryByName = async () => {
+            try {
+              const response = await axios.get(
+                `${API_URL}/users/${localStorage.getItem('accountId')}/search-reading-story`,
+                { params: { name: storyName } }
+              );
+        
+              const matchedStories = response.data;
+              if (!matchedStories || matchedStories.length === 0) {
+                speak(`Không tìm thấy truyện ${storyName} trong thư viện của bạn.`);
+                return;
+              }
+              if (matchedStories.length > 1) {
+                speak(`Tìm thấy nhiều truyện phù hợp với tên ${storyName}. Vui lòng nói rõ hơn tên truyện.`);
+                return;
+              }
+        
+              const matchedStory = matchedStories[0];
+              speak(`Bạn muốn xóa truyện ${matchedStory.name} khỏi thư viện. Hãy nói 'xác nhận' trong 15 giây để tiếp tục.`);
+        
+              // Lưu hàm onresult ban đầu
+              const originalOnResult = recognitionRef.current.onresult;
+        
+              // Gán onresult để chỉ lắng nghe "xác nhận"
+              recognitionRef.current.onresult = (event) => {
+                const confirmationTranscript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+                if (confirmationTranscript.includes('xác nhận')) {
+                  axios
+                    .post(`${API_URL}/remove-from-reading-list`, {
+                      accountId: localStorage.getItem('accountId'),
+                      storyId: matchedStory._id,
+                    })
+                    .then((response) => {
+                      if (response.data.message) {
+                        speak(`Đã xóa truyện ${matchedStory.name} khỏi thư viện. Đang làm mới trang.`, () => {
+                          window.location.reload(); // Làm mới trang
+                        });
+                      }
+                    })
+                    .catch((error) => {
+                      console.error('Lỗi khi xóa truyện:', error);
+                      speak("Có lỗi xảy ra khi xóa truyện. Vui lòng thử lại.");
+                    })
+                    .finally(() => {
+                      // Khôi phục onresult sau khi hoàn tất
+                      recognitionRef.current.onresult = originalOnResult;
+                    });
+                }
+              };
+        
+              // Thiết lập timeout để hủy nếu không xác nhận
+              setTimeout(() => {
+                if (recognitionRef.current.onresult !== originalOnResult) {
+                  speak(`Đã hủy xóa truyện ${matchedStory.name} do không nhận được xác nhận.`);
+                  recognitionRef.current.onresult = originalOnResult;
+                }
+              }, 15000);
+            } catch (error) {
+              console.error('Lỗi khi tìm truyện:', error);
+              speak(`Không thể tìm truyện ${storyName}. Vui lòng thử lại.`);
             }
-          });
+          };
+        
+          fetchStoryByName();
           return;
         }
 

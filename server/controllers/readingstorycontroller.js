@@ -152,4 +152,51 @@ router.get('/users/:accountId/get-reading-progress', async (req, res) => {
     }
 });
 
+router.get('/users/:accountId/search-reading-story', async (req, res) => {
+    try {
+      const { accountId } = req.params;
+      const { name } = req.query; // Tên truyện để tìm kiếm
+  
+      if (!name) {
+        return res.status(400).json({ message: 'Vui lòng cung cấp tên truyện để tìm kiếm.' });
+      }
+  
+      // Kiểm tra tài khoản tồn tại
+      const account = await accountModel.findById(accountId);
+      if (!account) {
+        return res.status(404).json({ message: 'Tài khoản không tồn tại.' });
+      }
+  
+      // Tìm user và populate story_reading
+      const user = await userModel.findOne({ account: accountId }).populate({
+        path: 'story_reading',
+        select: 'name _id', // Chỉ lấy name và _id của truyện
+      });
+  
+      if (!user) {
+        return res.status(404).json({ message: 'Người dùng không tồn tại.' });
+      }
+  
+      // Lọc truyện trong story_reading khớp với tên (không phân biệt hoa thường)
+      const matchedStories = user.story_reading.filter(story =>
+        story.name.toLowerCase().includes(name.toLowerCase())
+      );
+  
+      if (matchedStories.length === 0) {
+        return res.status(404).json({ message: `Không tìm thấy truyện ${name} trong thư viện.` });
+      }
+  
+      // Trả về danh sách truyện khớp
+      const result = matchedStories.map(story => ({
+        _id: story._id,
+        name: story.name,
+      }));
+  
+      res.status(200).json(result);
+    } catch (err) {
+      console.error('Lỗi khi tìm truyện trong thư viện:', err.message);
+      res.status(500).json({ message: `Lỗi server: ${err.message}` });
+    }
+  });
+
 module.exports = router;
