@@ -4,6 +4,7 @@ const router = express.Router();
 const accountModel = require('../models/Account.js');
 const storyModel = require('../models/Story.js');
 const authorModel = require('../models/Author.js');
+const ratingModel = require('../models/Rating.js');
 
 router.get("/stories", async (req, res) => {
     try {
@@ -262,5 +263,53 @@ router.get('/stories/:storyId/latest', async (req, res) => {
     }
 });
 
+router.get('/stories/:storyId/rating', async (req, res) => {
+    try {
+        const storyId = req.params.storyId;
+        const ratings = await ratingModel.find({ story_id: storyId });
+
+        if (ratings.length === 0) {
+            return res.json({ averageRating: 0, totalRatings: 0 });
+        }
+
+        const totalRatings = ratings.length;
+        const sumRatings = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+        const averageRating = (sumRatings / totalRatings).toFixed(1);
+
+        res.json({ averageRating, totalRatings });
+    } catch (error) {
+        console.error('Error fetching story rating:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+// API để người dùng gửi rating
+router.post('/stories/:storyId/rating', async (req, res) => {
+    try {
+        const { user, rating } = req.body;
+        const storyId = req.params.storyId;
+
+        let existingRating = await ratingModel.findOne({ user_id: user, story_id: storyId });
+
+        if (existingRating) {
+            existingRating.rating = rating;
+            existingRating.created_at = new Date();
+            await existingRating.save();
+        } else {
+            const newRating = new ratingModel({
+                user_id: user,
+                story_id: storyId,
+                rating: rating,
+                created_at: new Date(),
+            });
+            await newRating.save();
+        }
+
+        res.status(200).send('Rating submitted successfully');
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        res.status(500).send('Server error');
+    }
+});
 
 module.exports = router;

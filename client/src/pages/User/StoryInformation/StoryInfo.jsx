@@ -11,6 +11,8 @@ const StoryInfo = () => {
   const [chapterList, setChapterList] = useState([]);
   const [canContinueReading, setCanContinueReading] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [ratingData, setRatingData] = useState({ averageRating: 0, totalRatings: 0 });
+  const [userRating, setUserRating] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,6 +43,15 @@ const StoryInfo = () => {
         })
         .catch(error => console.error('Error checking continue reading availability:', error));
     }
+
+    // Lấy thông tin rating của truyện
+    axios.get(`${API_URL}/stories/${storyId}/rating`)
+      .then(response => {
+        setRatingData(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching rating:', error);
+      });
   }, [userId, storyId]);
 
   const handleReadFromStart = () => {
@@ -95,13 +106,30 @@ const StoryInfo = () => {
     }
   };
 
+  const handleRating = async (rating) => {
+    if (!userId) {
+      alert('Vui lòng đăng nhập để đánh giá truyện.');
+      return;
+    }
+    const user = localStorage.getItem('userId');
+    try {
+      await axios.post(`${API_URL}/stories/${storyId}/rating`, { user, rating });
+      setUserRating(rating);
+      const response = await axios.get(`${API_URL}/stories/${storyId}/rating`);
+      setRatingData(response.data);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      alert('Không thể gửi đánh giá. Vui lòng thử lại sau.');
+    }
+  };
+
   const callbacks = {
     handleReadFromStart,
     handleReadLatest,
     handleContinueReading,
   };
 
-  useVoiceControl({ chapters: chapterList, storyId, callbacks, story});
+  useVoiceControl({ chapters: chapterList, storyId, callbacks, story });
 
   if (!story) {
     return <div>Loading...</div>;
@@ -141,6 +169,27 @@ const StoryInfo = () => {
           >
             Đọc tiếp
           </button>
+        </div>
+        <div className="rating-section">
+          <h3>Đánh giá truyện</h3>
+          <div className="rating-stars">
+            {[1, 2, 3, 4, 5].map(star => (
+              <span
+                key={star}
+                className={`star ${star <= userRating ? 'filled' : ''}`}
+                onClick={() => handleRating(star)}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+          <p>
+            {ratingData.totalRatings > 0 ? (
+              `Điểm trung bình: ${ratingData.averageRating} (${ratingData.totalRatings} đánh giá)`
+            ) : (
+              <i>(chưa có đánh giá)</i>
+            )}
+          </p>
         </div>
       </div>
     </section>

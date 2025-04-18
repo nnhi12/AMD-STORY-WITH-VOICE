@@ -4,7 +4,8 @@ const readingchapterSchema = new mongoose.Schema({
     user_id: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     story_id: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Story' }],
     chapter_id: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' }],
-    count_row: Number
+    count_row: Number,
+    last_interaction: Date
 }, { versionKey: false }
 );
 

@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
     email: String,
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
     story_reading: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story'},
-    story_following: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story' }
+    story_following: { type: [mongoose.Schema.Types.ObjectId], ref: 'Story' },
+    preferred_categories: { type: [mongoose.Schema.Types.ObjectId], ref: 'Category' },
 }, { versionKey: false }
 );
 

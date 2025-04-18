@@ -50,6 +50,24 @@
   cursor: pointer;
 }
 
+.rating-section {
+  margin-top: 20px;
+}
+
+.rating-stars {
+  display: flex;
+  cursor: pointer;
+}
+
+.star {
+  font-size: 24px;
+  color: #ccc;
+}
+
+.star.filled {
+  color: #f39c12;
+}
+
 @media (max-width: 860px) {
   .u-story-name {
     padding: 9px;

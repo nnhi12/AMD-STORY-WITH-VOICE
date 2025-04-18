@@ -7,7 +7,7 @@ import Navbar from '../../../components/User/navbar.jsx';
 import StoryInfo from './StoryInfo';
 import ChapterList from './ChapterList';
 import NewestChapter from './NewestChapter';
-import RecommendedStories from '../../../components/User/RecommendStories.jsx';
+//import RecommendedStories from '../../../components/User/RecommendStories.jsx';
 import './StoryInforPage.css';
 
 
@@ -29,7 +29,7 @@ const StoryInforPage = () => {
             <NewestChapter />
           </div>
         </div>
-        <RecommendedStories storyId={storyId} />
+        {/* <RecommendedStories storyId={storyId} /> */}
       </div>
       <Footer />
     </div>
