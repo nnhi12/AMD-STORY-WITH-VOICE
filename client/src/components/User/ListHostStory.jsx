@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Book from './book';
+import Book from './Book';
 import { API_URL } from "../../env.js";
 
 const ListHost = ({ showChapters }) => {

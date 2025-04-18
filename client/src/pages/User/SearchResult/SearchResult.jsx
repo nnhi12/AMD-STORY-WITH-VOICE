@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '../../../layouts/header/User/header.jsx';
 import Footer from '../../../layouts/footer/User/footer.jsx';
@@ -11,7 +11,20 @@ import useVoiceControl from '../../../utils/voiceControl.js';
 const SearchStory = () => {
   const location = useLocation();
   const searchResults = location.state?.searchResults || [];
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    console.log('SearchStory - userID:', storedUserId);
+    setUserId(storedUserId);
+  }, []);
+
+  useEffect(() => {
+    console.log('SearchStory - searchResults:', searchResults);
+  }, [searchResults]);
+
   useVoiceControl("", "", "");
+
   return (
     <div className="u-main-page">
       <Header />
@@ -19,7 +32,7 @@ const SearchStory = () => {
       <div className="main-page-content">
         {searchResults.length > 0 ? (
           <div className="search-results">
-            <ListSearching results={searchResults} />
+            <ListSearching results={searchResults} userId={userId} />
           </div>
         ) : (
           <div className="no-results">
@@ -30,7 +43,7 @@ const SearchStory = () => {
                 className="no-results-image" 
               />
               <h3>Không tìm thấy truyện nào</h3>
-              <p>Chúng tôi không thể tìm thấy truyện nào với từ khóa bạn đã nhập. Hãy thử lại với từ khóa khác!</p>
+              <p>Không tìm thấy truyện phù hợp với từ khóa và độ tuổi của bạn. Hãy thử lại với từ khóa khác!</p>
             </div>
           </div>
         )}
