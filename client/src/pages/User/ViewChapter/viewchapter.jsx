@@ -96,7 +96,8 @@ function ViewChapter() {
     try {
       await axios.put(`${API_URL}/users/${localStorage.getItem('accountId')}/stories/${storyId}/reading-chapter`, {
         chapterId,
-        countRow
+        countRow,
+        last_interaction: new Date(), // Cập nhật thời gian đọc gần nhất
       });
     } catch (error) {
       console.warn('Chưa cập nhật được tiến trình:', error);
@@ -128,15 +129,12 @@ function ViewChapter() {
   };
 
   const handleReadChapter = (chapter_paragraph) => {
-    console.log('handleReadChapter called'); // Debug
+    console.log('handleReadChapter called');
     if (!chapter_paragraph.length) {
       console.log('No paragraphs to read');
       speak('Không có đoạn văn để đọc');
       return;
     }
-    //let paragraphArray = "";
-    //const isString = (typeof chapter_paragraph) == "string" ;
-    //isString? paragraphArray = chapter_paragraph.split('\n').filter(p => p.trim()) : "";
     let pIndex = parseInt(localStorage.getItem("currentParagraphIndex"));
     setIsSpeaking(true);
     localStorage.setItem('is_Speaking', JSON.stringify(true));
@@ -159,6 +157,10 @@ function ViewChapter() {
         if (index === chapter_paragraph.length - pIndex - 1) {
           setIsSpeaking(false);
           localStorage.setItem('isSpeaking', JSON.stringify(false));
+          // Gọi callback để thông báo chapter hoàn tất
+          if (callbacks.onChapterFinished) {
+            callbacks.onChapterFinished();
+          }
         }
       };
       return utterance;
@@ -170,18 +172,16 @@ function ViewChapter() {
   };
 
   const handleStopReading = () => {
-    console.log('Before cancel: ', window.speechSynthesis.speaking); // Trạng thái trước
+    console.log('Before cancel: ', window.speechSynthesis.speaking);
     window.speechSynthesis.cancel();
-    console.log('After cancel: ', window.speechSynthesis.speaking);  // Dừng tất cả utterance đang phát
-    setIsSpeaking(false);              // Cập nhật trạng thái
-    localStorage.setItem('is_Speaking', JSON.stringify(false)); // Nếu bạn dùng localStorage
+    console.log('After cancel: ', window.speechSynthesis.speaking);
+    setIsSpeaking(false);
+    localStorage.setItem('is_Speaking', JSON.stringify(false));
   };
-
-
 
   const handleContinueReading = () => {
     if (localStorage.getItem('currentParagraphIndex') > 0) {
-      handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))); // Sử dụng paragraphs từ state
+      handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph')));
     } else {
       speak('Bạn đang ở đầu chương. Hãy nói "nghe truyện" để bắt đầu.');
     }
@@ -189,9 +189,9 @@ function ViewChapter() {
 
   const handleReadFromBeginning = () => {
     console.log('handleReadFromBeginning called');
-    setCurrentParagraphIndex(0); // Đặt lại index về 0
-    localStorage.setItem('currentParagraphIndex', 0); // Cập nhật localStorage
-    handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))); 
+    setCurrentParagraphIndex(0);
+    localStorage.setItem('currentParagraphIndex', 0);
+    handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph')));
   };
 
   const handleCommentSubmit = () => {
@@ -215,6 +215,15 @@ function ViewChapter() {
       .catch(error => console.error('Lỗi khi đăng bình luận:', error));
   };
 
+  const handleRatingDecision = (decision) => {
+    if (decision.toLowerCase() === 'có') {
+      navigate(`/storyinfo/${storyId}`);
+      speak('Đã chuyển đến trang đánh giá truyện. Hãy nói số sao bạn muốn đánh giá, từ 1 đến 5.');
+    } else {
+      speak('Bạn đã từ chối đánh giá. Cảm ơn bạn đã đọc truyện!');
+    }
+  };
+
   const callbacks = {
     toggleDropdown,
     navigateToChapter,
@@ -228,11 +237,12 @@ function ViewChapter() {
     handleCommentSubmit,
     updateReadingProgress,
     setComments,
+    onChapterFinished: () => {}, // Sẽ được useVoiceControl sử dụng để phát hiện chapter hoàn tất
+    onRatingDecision: handleRatingDecision, // Callback xử lý quyết định đánh giá
   };
 
-  // Sửa cách gọi useVoiceControl
   const { isListening = false } = useVoiceControl({
-    chapters, // Danh sách chương từ API
+    chapters,
     storyId,
     chapterData,
     currentParagraphIndex,
@@ -245,33 +255,33 @@ function ViewChapter() {
   }) || {};
 
   useEffect(() => {
-  const handleScroll = () => {
-    const windowHeight = window.innerHeight;
-    const centerY = windowHeight / 2; // Điểm giữa màn hình
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const centerY = windowHeight / 2;
 
-    const visibleParagraphIndex = paragraphRefs.current.reduce((closestIndex, ref, index) => {
-      if (!ref) return closestIndex;
-      const rect = ref.getBoundingClientRect();
-      const distanceFromCenter = Math.abs(rect.top + rect.height / 2 - centerY); // Khoảng cách từ giữa đoạn văn đến giữa màn hình
+      const visibleParagraphIndex = paragraphRefs.current.reduce((closestIndex, ref, index) => {
+        if (!ref) return closestIndex;
+        const rect = ref.getBoundingClientRect();
+        const distanceFromCenter = Math.abs(rect.top + rect.height / 2 - centerY);
 
-      if (closestIndex === -1) return index; // Nếu chưa có đoạn nào, chọn đoạn đầu tiên
-      const currentClosestDistance = Math.abs(
-        paragraphRefs.current[closestIndex].getBoundingClientRect().top +
-        paragraphRefs.current[closestIndex].getBoundingClientRect().height / 2 - centerY
-      );
-      return distanceFromCenter < currentClosestDistance ? index : closestIndex;
-    }, -1);
+        if (closestIndex === -1) return index;
+        const currentClosestDistance = Math.abs(
+          paragraphRefs.current[closestIndex].getBoundingClientRect().top +
+          paragraphRefs.current[closestIndex].getBoundingClientRect().height / 2 - centerY
+        );
+        return distanceFromCenter < currentClosestDistance ? index : closestIndex;
+      }, -1);
 
-    if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
-      console.log('Highlighting paragraph at index:', visibleParagraphIndex);
-      setCurrentParagraphIndex(visibleParagraphIndex);
-      updateReadingProgress(chapterId, visibleParagraphIndex + 1);
-    }
-  };
+      if (visibleParagraphIndex !== -1 && visibleParagraphIndex !== currentParagraphIndex) {
+        console.log('Highlighting paragraph at index:', visibleParagraphIndex);
+        setCurrentParagraphIndex(visibleParagraphIndex);
+        updateReadingProgress(chapterId, visibleParagraphIndex + 1);
+      }
+    };
 
-  window.addEventListener('scroll', handleScroll);
-  return () => window.removeEventListener('scroll', handleScroll);
-}, [currentParagraphIndex, chapterId]); // Thêm updateReadingProgress vào dependencies nếu cần
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [currentParagraphIndex, chapterId]);
 
   if (!chapterData.chapter) {
     return <div>Loading...</div>;

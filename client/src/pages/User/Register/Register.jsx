@@ -1,23 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Register.css';
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from "../../../env.js";
+import { API_URL } from '../../../env.js';
 import useVoiceControl from '../../../utils/voiceControl.js';
 
 function Register() {
   const navigate = useNavigate();
   const [createForm, setCreateForm] = useState({
-    username: "",
-    password: "",
-    email: "",
-    confirmPassword: "",
-    age: "", // Thêm age
-    gender: "other" // Mặc định là 'other'
+    username: '',
+    password: '',
+    email: '',
+    confirmPassword: '',
+    age: '',
+    gender: 'other',
+    preferredCategories: [], // Thêm preferredCategories
   });
-  const [message, setMessage] = useState("");
+  const [categories, setCategories] = useState([]); // Danh sách thể loại
+  const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Lấy danh sách thể loại khi component được mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/categories`);
+        setCategories(response.data);
+        setLoadingCategories(false);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setMessage('Failed to load categories. Please try again.');
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,30 +46,38 @@ function Register() {
     }));
   };
 
+  const handleCategoryChange = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+    setCreateForm((prevForm) => ({
+      ...prevForm,
+      preferredCategories: selectedOptions,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Kiểm tra nếu có trường nào bỏ trống
     if (!createForm.username || !createForm.email || !createForm.password || !createForm.confirmPassword || !createForm.age) {
-      setMessage("Please fill in all fields.");
+      setMessage('Please fill in all required fields.');
       return;
     }
 
     // Kiểm tra độ dài mật khẩu
     if (createForm.password.length < 8) {
-      setMessage("Password must be at least 8 characters long.");
+      setMessage('Password must be at least 8 characters long.');
       return;
     }
 
     // Kiểm tra confirm password
     if (createForm.password !== createForm.confirmPassword) {
-      setMessage("Passwords do not match. Please try again.");
+      setMessage('Passwords do not match. Please try again.');
       return;
     }
 
     // Kiểm tra age là số hợp lệ
     if (isNaN(createForm.age) || createForm.age < 0) {
-      setMessage("Please enter a valid age.");
+      setMessage('Please enter a valid age.');
       return;
     }
 
@@ -59,35 +86,36 @@ function Register() {
         username: createForm.username,
         password: createForm.password,
         email: createForm.email,
-        age: parseInt(createForm.age), // Chuyển age thành số nguyên
+        age: parseInt(createForm.age),
         gender: createForm.gender,
+        preferred_categories: createForm.preferredCategories, // Gửi danh sách thể loại
       });
 
-      console.log("Account created:", response.data);
-      setMessage("Registration successful! Redirecting to login page...");
+      console.log('Account created:', response.data);
+      setMessage('Registration successful! Redirecting to login page...');
 
       setTimeout(() => {
-        navigate("/login");
+        navigate('/login');
       }, 2000);
     } catch (error) {
-      console.error("Error registering account:", error);
+      console.error('Error registering account:', error);
       if (error.response && error.response.data && error.response.data.message) {
         setMessage(error.response.data.message);
       } else {
-        setMessage("Registration failed. Please try again.");
+        setMessage('Registration failed. Please try again.');
       }
     }
   };
 
   const togglePasswordVisibility = () => {
-    setShowPassword(prevState => !prevState);
+    setShowPassword((prevState) => !prevState);
   };
 
   const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(prevState => !prevState);
+    setShowConfirmPassword((prevState) => !prevState);
   };
 
-  useVoiceControl("", "", "");
+  useVoiceControl('', '', '');
 
   return (
     <div className="body-regis">
@@ -147,10 +175,30 @@ function Register() {
                 </select>
               </div>
               <div className="regis-form-group">
+                <label>PREFERRED CATEGORIES</label>
+                {loadingCategories ? (
+                  <p>Loading categories...</p>
+                ) : (
+                  <select
+                    name="preferredCategories"
+                    multiple
+                    value={createForm.preferredCategories}
+                    onChange={handleCategoryChange}
+                    className="category-select"
+                  >
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div className="regis-form-group">
                 <label>PASSWORD</label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={createForm.password}
                     onChange={handleChange}
@@ -161,7 +209,7 @@ function Register() {
                     onClick={togglePasswordVisibility}
                     className="password-toggle-btn"
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword ? 'Hide' : 'Show'}
                   </button>
                 </div>
                 {createForm.password.length > 0 && createForm.password.length < 8 && (
@@ -174,7 +222,7 @@ function Register() {
                 <label>CONFIRM PASSWORD</label>
                 <div className="password-input-wrapper">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     name="confirmPassword"
                     value={createForm.confirmPassword}
                     onChange={handleChange}
@@ -185,10 +233,10 @@ function Register() {
                     onClick={toggleConfirmPasswordVisibility}
                     className="password-toggle-btn"
                   >
-                    {showConfirmPassword ? "Hide" : "Show"}
+                    {showConfirmPassword ? 'Hide' : 'Show'}
                   </button>
                 </div>
-                {createForm.password === createForm.confirmPassword && createForm.confirmPassword !== "" && (
+                {createForm.password === createForm.confirmPassword && createForm.confirmPassword !== '' && (
                   <div className="password-match-check">
                     <span className="checkmark">✔</span> Passwords match!
                   </div>

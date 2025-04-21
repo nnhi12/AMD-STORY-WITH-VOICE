@@ -6,7 +6,7 @@ import { API_URL } from '../../env';
 import Header from '../../layouts/header/User/header.jsx';
 import Footer from '../../layouts/footer/User/footer.jsx';
 import Navbar from '../../components/User/navbar.jsx';
-import useVoiceControl from '../../utils/voiceControl.js';
+
 const StoryByCategory = () => {
   const [stories, setStories] = useState([]);
   const [categoryName, setCategoryName] = useState(''); // Thêm trạng thái để lưu tên danh mục
@@ -35,9 +35,7 @@ const StoryByCategory = () => {
 
     fetchCategoryAndStories();
   }, [category]);
-  
-  useVoiceControl("", "", "");
-  
+
   return (
     <div className="page-container">
       <Header />

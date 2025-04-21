@@ -1,49 +1,73 @@
 const express = require('express');
 const router = express.Router();
+const Account = require('../models/Account');
+const Subscription = require('../models/Subcription');
 
-const accountModel = require('../models/Account.js');
-
-//dang ky vip
+// Cập nhật trạng thái VIP
 router.post('/update-status', async (req, res) => {
-    const accountId = req.body.accountId; // Lấy ID tài khoản từ body request
+    const { accountId, checkOnly } = req.body; // Thêm checkOnly để kiểm tra trạng thái
 
     try {
-        // Tìm tài khoản theo ID
-        const account = await accountModel.findById(accountId);
-
+        // Kiểm tra tài khoản
+        const account = await Account.findById(accountId);
         if (!account) {
             return res.status(404).json({ message: 'Tài khoản không tồn tại.' });
         }
 
-        // Cập nhật status
-        const updatedStatus = !account.status; // Đổi trạng thái
-        account.status = updatedStatus;
-
-        // Cập nhật start_date và end_date nếu tài khoản VIP được kích hoạt
+        // Tìm hoặc tạo subscription
+        let subscription = await Subscription.findOne({ account: accountId });
         const currentDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(currentDate.getDate() + 30);
-        if (updatedStatus) {
-            account.start_date = currentDate; // Ngày bắt đầu là ngày hiện tại
-            account.end_date = endDate; // Ngày kết thúc là 30 ngày sau
-        } else {
-            // Nếu hủy VIP, có thể reset ngày (hoặc giữ nguyên tùy theo logic của bạn)
-            account.start_date = null;
-            account.end_date = null;
+
+        if (checkOnly) {
+            // Chỉ kiểm tra trạng thái VIP
+            const isVip = subscription && subscription.expired_date > currentDate;
+            return res.status(200).json({
+                isVip,
+                startDate: subscription ? subscription.start_date : null,
+                endDate: subscription ? subscription.expired_date : null,
+            });
         }
 
-        // Lưu thay đổi
+        // Đặt ngày bắt đầu và ngày kết thúc cho VIP
+        const endDate = new Date(currentDate);
+        endDate.setDate(currentDate.getDate() + 30); // VIP kéo dài 30 ngày
+
+        if (!subscription) {
+            // Tạo subscription mới
+            subscription = await Subscription.create({
+                account: accountId,
+                start_date: currentDate,
+                expired_date: endDate,
+            });
+            account.status = true; // Cập nhật trạng thái tài khoản thành VIP
+        } else if (subscription.expired_date < currentDate) {
+            // Cập nhật subscription nếu đã hết hạn
+            subscription.start_date = currentDate;
+            subscription.expired_date = endDate;
+            await subscription.save();
+            account.status = true;
+        } else {
+            // Subscription còn hiệu lực
+            return res.status(200).json({
+                message: 'Tài khoản đã là VIP.',
+                newStatus: account.status,
+                startDate: subscription.start_date,
+                endDate: subscription.expired_date,
+            });
+        }
+
+        // Lưu thay đổi trạng thái tài khoản
         await account.save();
 
         return res.status(200).json({
-            message: `Trạng thái tài khoản đã được cập nhật thành công.`,
-            newStatus: updatedStatus,
-            startDate: account.start_date,
-            endDate: account.end_date
+            message: 'Trạng thái tài khoản đã được cập nhật thành công.',
+            newStatus: account.status,
+            startDate: subscription.start_date,
+            endDate: subscription.expired_date,
         });
     } catch (error) {
         console.error('Lỗi khi cập nhật trạng thái:', error);
-        res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật trạng thái.' });
+        res.status(500).json({ message: 'Đã xảy ra lỗi khi cập nhật trạng thái.', error: error.message });
     }
 });
 

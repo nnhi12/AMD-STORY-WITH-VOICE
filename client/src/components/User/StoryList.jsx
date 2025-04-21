@@ -16,6 +16,7 @@ const StoryList = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedRecommendation, setSelectedRecommendation] = useState('all'); // Trạng thái cho combobox
     const userId = localStorage.getItem('userId');
     const [refresh, setRefresh] = useState(false);
 
@@ -40,16 +41,22 @@ const StoryList = () => {
                     collaborative: collaborativeResponse.data,
                     hybrid: hybridResponse.data,
                 };
+                console.log('Recommendations fetched:', {
+                    contentBased: newRecommendations.contentBased.map(s => s._id),
+                    collaborative: newRecommendations.collaborative.map(s => s._id),
+                    hybrid: newRecommendations.hybrid.map(s => s._id),
+                });
                 setRecommendations(newRecommendations);
-                // console.log('Recommendations fetched:', {
-                //     contentBased: newRecommendations.contentBased.map(s => s._id),
-                //     collaborative: newRecommendations.collaborative.map(s => s._id),
-                //     hybrid: newRecommendations.hybrid.map(s => s._id),
-                // });
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching recommendations:', err.response ? err.response.data : err.message);
-                setError('Không thể tải danh sách truyện gợi ý. Vui lòng thử lại sau.');
+                setError(
+                    err.response?.status === 401
+                        ? 'Vui lòng đăng nhập để xem gợi ý.'
+                        : err.response?.status === 404
+                        ? 'Không tìm thấy người dùng.'
+                        : 'Không thể tải danh sách truyện gợi ý. Vui lòng thử lại sau.'
+                );
                 setLoading(false);
             }
         };
@@ -64,15 +71,24 @@ const StoryList = () => {
         setTimeout(() => setRefresh(false), 1000);
     };
 
+    const handleRecommendationChange = (event) => {
+        setSelectedRecommendation(event.target.value);
+    };
+
     const renderStorySection = (stories, title) => (
         <div className="story-list">
             <h2 className="section-title">{title}</h2>
             {stories.length === 0 ? (
-                <p>Không có truyện nào để hiển thị.</p>
+                <p>Không có truyện phù hợp với độ tuổi của bạn để hiển thị.</p>
             ) : (
                 <div className="story-grid">
                     {stories.map(story => (
-                        <Link to={`/storyinfo/${story._id}`} key={story._id} className="story-item">
+                        <Link 
+                            to={`/storyinfo/${story._id}`} 
+                            key={story._id} 
+                            className="story-item"
+                            state={{ userId }}
+                        >
                             <div className="story-image-wrapper">
                                 {story.image ? (
                                     <img
@@ -95,24 +111,50 @@ const StoryList = () => {
         </div>
     );
 
+    const renderRecommendations = () => {
+        if (selectedRecommendation === 'all') {
+            return (
+                <>
+                    {renderStorySection(recommendations.contentBased, 'Gợi ý dựa trên nội dung')}
+                    {renderStorySection(recommendations.collaborative, 'Gợi ý dựa trên người dùng tương tự')}
+                    {renderStorySection(recommendations.hybrid, 'Gợi ý kết hợp')}
+                </>
+            );
+        } else if (selectedRecommendation === 'contentBased') {
+            return renderStorySection(recommendations.contentBased, 'Gợi ý dựa trên nội dung');
+        } else if (selectedRecommendation === 'collaborative') {
+            return renderStorySection(recommendations.collaborative, 'Gợi ý dựa trên người dùng tương tự');
+        } else if (selectedRecommendation === 'hybrid') {
+            return renderStorySection(recommendations.hybrid, 'Gợi ý kết hợp');
+        }
+    };
+
     return (
         <div className="page-container">
             <Header />
             <Navbar />
             <main className="main-content">
-                <button onClick={handleRefresh} className="refresh-button">
-                    Làm mới gợi ý
-                </button>
+                <div className="controls">
+                    <select 
+                        value={selectedRecommendation} 
+                        onChange={handleRecommendationChange} 
+                        className="recommendation-select"
+                    >
+                        <option value="all">Tất cả gợi ý</option>
+                        <option value="contentBased">Gợi ý dựa trên nội dung</option>
+                        <option value="collaborative">Gợi ý dựa trên người dùng tương tự</option>
+                        <option value="hybrid">Gợi ý kết hợp</option>
+                    </select>
+                    <button onClick={handleRefresh} className="refresh-button">
+                        Làm mới gợi ý
+                    </button>
+                </div>
                 {loading ? (
                     <div className="loading">Đang tải gợi ý...</div>
                 ) : error ? (
                     <div className="error">{error}</div>
                 ) : (
-                    <>
-                        {renderStorySection(recommendations.contentBased, 'Gợi ý dựa trên nội dung')}
-                        {renderStorySection(recommendations.collaborative, 'Gợi ý dựa trên người dùng tương tự')}
-                        {renderStorySection(recommendations.hybrid, 'Gợi ý kết hợp')}
-                    </>
+                    renderRecommendations()
                 )}
             </main>
             <Footer />
