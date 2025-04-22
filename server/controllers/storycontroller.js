@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const userModel = require('../models/User.js');
+const accountModel = require('../models/Account.js');
 const storyModel = require('../models/Story.js');
 const authorModel = require('../models/Author.js');
 const ratingModel = require('../models/Rating.js');
@@ -231,13 +232,13 @@ router.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
 
 router.get('/stories/:storyId/first', async (req, res) => {
     try {
-        const { userID } = req.query;
+        const { accountId } = req.query;
 
         // Lấy thông tin user nếu có userID
         let user = null;
         let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
-        if (userID) {
-            user = await userModel.findById(userID);
+        if (accountId) {
+            user = await accountModel.findById(accountId);
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
@@ -289,13 +290,13 @@ router.get('/stories/:storyId/first', async (req, res) => {
 
 router.get('/stories/:storyId/latest', async (req, res) => {
     try {
-        const { userID } = req.query;
+        const { accountId } = req.query;
 
         // Lấy thông tin user nếu có userID
         let user = null;
         let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
-        if (userID) {
-            user = await userModel.findById(userID);
+        if (accountId) {
+            user = await accountModel.findById(accountId);
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }

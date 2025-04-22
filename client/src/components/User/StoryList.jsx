@@ -16,9 +16,28 @@ const StoryList = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedRecommendation, setSelectedRecommendation] = useState('all'); // Trạng thái cho combobox
+    const [selectedRecommendation, setSelectedRecommendation] = useState('all');
     const userId = localStorage.getItem('userId');
     const [refresh, setRefresh] = useState(false);
+
+    // Tích hợp useVoiceControl với callback để cập nhật lựa chọn hiển thị
+    const { isListening } = useVoiceControl({
+        callbacks: {
+            setSelectedRecommendation: (value) => {
+                setSelectedRecommendation(value);
+            },
+            speak: (text) => {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "vi-VN";
+                const voices = synth.getVoices();
+                const vietnameseVoice = voices.find(voice => voice.lang === "vi-VN");
+                if (vietnameseVoice) utterance.voice = vietnameseVoice;
+                synth.speak(utterance);
+            }
+        },
+        userId
+    });
 
     useEffect(() => {
         const fetchRecommendations = async () => {
@@ -63,8 +82,6 @@ const StoryList = () => {
 
         fetchRecommendations();
     }, [userId, refresh]);
-
-    useVoiceControl('', '', '');
 
     const handleRefresh = () => {
         setRefresh(true);
@@ -149,6 +166,7 @@ const StoryList = () => {
                         Làm mới gợi ý
                     </button>
                 </div>
+                <p>{isListening ? '🎤 Đang lắng nghe...' : '🔇 Nhấn Ctrl để nói'}</p>
                 {loading ? (
                     <div className="loading">Đang tải gợi ý...</div>
                 ) : error ? (

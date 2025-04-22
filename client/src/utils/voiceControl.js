@@ -143,7 +143,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         const isSpeaking = JSON.parse(localStorage.getItem('is_Speaking')) || false;
         const currentParagraphIndex = JSON.parse(localStorage.getItem('currentParagraphIndex')) || 0;
 
-
         // Xử lý khi đang hỏi về đánh giá (trang ViewChapter)
         if (isAskingForRatingRef.current) {
           if (transcript === 'có' || transcript === 'không') {
@@ -158,6 +157,110 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             speak('Vui lòng nói "có" hoặc "không".');
           }
           return;
+        }
+
+        // Xử lý lệnh đăng xuất
+        if (transcript.includes('đăng xuất')) {
+          const userId = localStorage.getItem('accountId');
+          if (!userId) {
+            speak("Bạn chưa đăng nhập.");
+            return;
+          }
+          speak("Bạn muốn đăng xuất? Hãy nói 'xác nhận' trong 10 giây để tiếp tục.");
+          const originalOnResult = recognitionRef.current.onresult;
+
+          recognitionRef.current.onresult = (event) => {
+            const confirmationTranscript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+            if (confirmationTranscript.includes('xác nhận')) {
+              localStorage.removeItem("username");
+              localStorage.removeItem("userID"); // Sửa từ accountId thành userID
+              localStorage.removeItem("vipExpiredNotificationShown");
+              navigate("/login");
+              recognitionRef.current.onresult = originalOnResult;
+            }
+          };
+
+          setTimeout(() => {
+            if (recognitionRef.current.onresult !== originalOnResult) {
+              speak("Đã hủy đăng xuất do không nhận được xác nhận.");
+              recognitionRef.current.onresult = originalOnResult;
+            }
+          }, 20000);
+          return;
+        }
+        if (location.pathname === '/login') {
+          if (transcript.startsWith('nhập tên đăng nhập ')) {
+            const username = transcript.replace('nhập tên đăng nhập ', '').trim();
+            if (username && callbacks.setUsername) {
+              callbacks.setUsername(username);
+              speak(`Đã nhập tên đăng nhập: ${username}`);
+            } else {
+              speak('Vui lòng cung cấp tên đăng nhập hợp lệ.');
+            }
+            return;
+          } else if (transcript.startsWith('nhập mật khẩu ')) {
+            const password = transcript.replace('nhập mật khẩu ', '').trim();
+            if (password && callbacks.setPassword) {
+              callbacks.setPassword(password);
+              speak('Đã nhập mật khẩu.');
+            } else {
+              speak('Vui lòng cung cấp mật khẩu hợp lệ.');
+            }
+            return;
+          } else if (transcript.includes('đăng nhập')) {
+            if (callbacks.submitLogin) {
+              speak('Đang thực hiện đăng nhập.');
+              callbacks.submitLogin();
+            } else {
+              speak('Không thể đăng nhập. Vui lòng thử lại.');
+            }
+            return;
+          }
+        }
+
+        if (location.pathname === '/colab-recommend') {
+          if (
+            transcript.includes('mở tất cả gợi ý') ||
+            transcript.includes('hiển thị tất cả gợi ý') ||
+            transcript.includes('tất cả gợi ý')
+          ) {
+            if (callbacks.setSelectedRecommendation) {
+              callbacks.setSelectedRecommendation('all');
+              callbacks.speak('Đang hiển thị tất cả gợi ý.');
+            }
+            return;
+          } else if (
+            transcript.includes('mở gợi ý dựa trên nội dung') ||
+            transcript.includes('hiển thị gợi ý dựa trên nội dung') ||
+            transcript.includes('gợi ý nội dung')
+          ) {
+            if (callbacks.setSelectedRecommendation) {
+              callbacks.setSelectedRecommendation('contentBased');
+              callbacks.speak('Đang hiển thị gợi ý dựa trên nội dung.');
+            }
+            return;
+          } else if (
+            transcript.includes('mở gợi ý dựa trên người dùng') ||
+            transcript.includes('hiển thị gợi ý dựa trên người dùng') ||
+            transcript.includes('gợi ý người dùng') ||
+            transcript.includes('gợi ý cộng tác')
+          ) {
+            if (callbacks.setSelectedRecommendation) {
+              callbacks.setSelectedRecommendation('collaborative');
+              callbacks.speak('Đang hiển thị gợi ý dựa trên người dùng tương tự.');
+            }
+            return;
+          } else if (
+            transcript.includes('mở gợi ý kết hợp') ||
+            transcript.includes('hiển thị gợi ý kết hợp') ||
+            transcript.includes('gợi ý kết hợp')
+          ) {
+            if (callbacks.setSelectedRecommendation) {
+              callbacks.setSelectedRecommendation('hybrid');
+              callbacks.speak('Đang hiển thị gợi ý kết hợp.');
+            }
+            return;
+          }
         }
 
         if (location.pathname === '/' && transcript.includes('đọc danh sách truyện')) {
@@ -662,13 +765,13 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
 
           if (transcript.includes('chương trước') && previousIdRef.current) {
             speak('Đang chuyển đến chương trước', () => navigateToChapter(previousIdRef.current));
-          } else if (transcript.includes('chương tiếp') && nextIdRef.current) {
+          } else if (transcript.includes('trương tuyết') && nextIdRef.current) {
             speak('Đang chuyển đến chương tiếp', () => navigateToChapter(nextIdRef.current));
           } else if (transcript.includes('danh sách chương')) {
             speak('Đang mở danh sách chương', toggleDropdown);
           } else if (transcript.includes('nghe truyện') && !isSpeaking) {
             console.log('Triggering handleReadChapter');
-            speak('Đang bắt đầu nghe truyện', () => handleReadChapter(paragraphs));
+            speak('Đang bắt đầu nghe truyện', handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))));
           } else if (transcript.includes('dừng nghe')) {
             console.log('Triggering handleStop');
             handleStopReading();
@@ -685,7 +788,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             console.log('Triggering handleReadFromBeginning');
             speak('Đang đọc lại từ đầu chương');
             handleReadFromBeginning();
-          } else if (transcript.includes('bình luận truyện')) {
+          }
+          else if (transcript.includes('bình luận truyện')) {
             speak('Đang mở khung bình luận', scrollToComment);
           } else if (transcript.startsWith('nhập ')) {
             const text = transcript.replace('nhập ', '');
@@ -693,7 +797,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               setCommentText(text);
               commentTextRef.current = text;
             });
-          } else if (transcript.includes('đăng bình luận')) {
+          } else if (transcript.includes('đang bình luận')) {
             submitComment();
           }
         }
@@ -716,7 +820,20 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
   }, [navigate, isChapterPage, chapters, storyId, chapterData, currentParagraphIndex, callbacks]);
 
   const handleCommand = (transcript) => {
-    return transcript.includes('đọc thông tin trang') ||
+    return transcript.includes('mở tất cả gợi ý') ||
+      transcript.includes('hiển thị tất cả gợi ý') ||
+      transcript.includes('tất cả gợi ý') ||
+      transcript.includes('mở gợi ý dựa trên nội dung') ||
+      transcript.includes('hiển thị gợi ý dựa trên nội dung') ||
+      transcript.includes('gợi ý nội dung') ||
+      transcript.includes('mở gợi ý dựa trên người dùng') ||
+      transcript.includes('hiển thị gợi ý dựa trên người dùng') ||
+      transcript.includes('gợi ý người dùng') ||
+      transcript.includes('gợi ý cộng tác') ||
+      transcript.includes('mở gợi ý kết hợp') ||
+      transcript.includes('hiển thị gợi ý kết hợp') ||
+      transcript.includes('gợi ý kết hợp') ||
+      transcript.includes('đọc thông tin trang') ||
       transcript.includes('đọc danh sách truyện') ||
       transcript.includes('dừng lại') ||
       transcript.startsWith('xóa truyện ') ||
@@ -764,7 +881,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       transcript.includes('truyện thiếu nhi') ||
       transcript.includes('trẻ dưới 13 tuổi nên đọc truyện gì') ||
       transcript.includes('tìm truyện theo tuổi nhập') ||
-      transcript.includes('truyện theo tuổi tự chọn');
+      transcript.includes('truyện theo tuổi tự chọn') ||
+      transcript.includes('đăng xuất');
   };
 
   const submitComment = async () => {
@@ -916,7 +1034,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     const isAppFirstLaunch = !localStorage.getItem("appLaunched");
     if (isAppFirstLaunch && !isChapterPage) {
       speak(
-        "Chào mừng bạn đến với trang web đọc truyện! Bạn có thể nói 'trang chủ', 'thư viện' hoặc 'truyện hay nhất' để điều hướng."
+        "Chào mừng bạn đến với trang web đọc truyện! Bạn có thể nói 'trang chủ', 'thư viện', 'truyện hay nhất' hoặc 'đăng xuất' để điều hướng."
       );
       localStorage.setItem("appLaunched", "true");
     }
