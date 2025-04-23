@@ -9,6 +9,10 @@ import Navbar from '../../components/User/navbar.jsx';
 import useVoiceControl from '../../utils/voiceControl.js';
 
 const StoryList = () => {
+    // Initialize selectedRecommendation from localStorage or default to 'all'
+    const [selectedRecommendation, setSelectedRecommendation] = useState(
+        localStorage.getItem('selectedRecommendation') || 'all'
+    );
     const [recommendations, setRecommendations] = useState({
         contentBased: [],
         collaborative: [],
@@ -16,7 +20,6 @@ const StoryList = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedRecommendation, setSelectedRecommendation] = useState('all');
     const userId = localStorage.getItem('userId');
     const [refresh, setRefresh] = useState(false);
 
@@ -25,6 +28,8 @@ const StoryList = () => {
         callbacks: {
             setSelectedRecommendation: (value) => {
                 setSelectedRecommendation(value);
+                // Save to localStorage when recommendation changes
+                localStorage.setItem('selectedRecommendation', value);
             },
             speak: (text) => {
                 const synth = window.speechSynthesis;
@@ -36,8 +41,13 @@ const StoryList = () => {
                 synth.speak(utterance);
             }
         },
-        userId
+        userId,
     });
+
+    // Save selectedRecommendation to localStorage when it changes
+    useEffect(() => {
+        localStorage.setItem('selectedRecommendation', selectedRecommendation);
+    }, [selectedRecommendation]);
 
     useEffect(() => {
         const fetchRecommendations = async () => {
@@ -61,9 +71,9 @@ const StoryList = () => {
                     hybrid: hybridResponse.data,
                 };
                 console.log('Recommendations fetched:', {
-                    contentBased: newRecommendations.contentBased.map(s => s._id),
-                    collaborative: newRecommendations.collaborative.map(s => s._id),
-                    hybrid: newRecommendations.hybrid.map(s => s._id),
+                    contentBased: newRecommendations.contentBased.map((s) => s._id),
+                    collaborative: newRecommendations.collaborative.map((s) => s._id),
+                    hybrid: newRecommendations.hybrid.map((s) => s._id),
                 });
                 setRecommendations(newRecommendations);
                 setLoading(false);
@@ -89,7 +99,9 @@ const StoryList = () => {
     };
 
     const handleRecommendationChange = (event) => {
-        setSelectedRecommendation(event.target.value);
+        const value = event.target.value;
+        setSelectedRecommendation(value);
+        // No speech synthesis here; voiceControl.js handles announcements
     };
 
     const renderStorySection = (stories, title) => (
@@ -99,13 +111,8 @@ const StoryList = () => {
                 <p>Không có truyện phù hợp với độ tuổi của bạn để hiển thị.</p>
             ) : (
                 <div className="story-grid">
-                    {stories.map(story => (
-                        <Link 
-                            to={`/storyinfo/${story._id}`} 
-                            key={story._id} 
-                            className="story-item"
-                            state={{ userId }}
-                        >
+                    {stories.map((story) => (
+                        <Link to={`/storyinfo/${story._id}`} key={story._id} className="story-item" state={{ userId }}>
                             <div className="story-image-wrapper">
                                 {story.image ? (
                                     <img
@@ -152,9 +159,9 @@ const StoryList = () => {
             <Navbar />
             <main className="main-content">
                 <div className="controls">
-                    <select 
-                        value={selectedRecommendation} 
-                        onChange={handleRecommendationChange} 
+                    <select
+                        value={selectedRecommendation}
+                        onChange={handleRecommendationChange}
                         className="recommendation-select"
                     >
                         <option value="all">Tất cả gợi ý</option>

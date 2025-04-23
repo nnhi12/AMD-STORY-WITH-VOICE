@@ -219,46 +219,88 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
         }
 
         if (location.pathname === '/colab-recommend') {
+          // Hàm lấy recommendationText từ selectedRecommendation
+          const getRecommendationText = (selectedRecommendation) => {
+            switch (selectedRecommendation) {
+              case 'all':
+                return 'tất cả gợi ý';
+              case 'contentBased':
+                return 'gợi ý dựa trên nội dung';
+              case 'collaborative':
+                return 'gợi ý dựa trên người dùng tương tự';
+              case 'hybrid':
+                return 'gợi ý kết hợp';
+              default:
+                return 'tất cả gợi ý';
+            }
+          };
+        
+          // Hàm gọi API lấy danh sách truyện
+          const fetchRecommendations = async (type, userId) => {
+            try {
+              const endpoint = type === 'all' 
+                ? `${API_URL}/recommend/content-based/${userId}` // Có thể sửa để gộp cả 3 API nếu cần
+                : `${API_URL}/recommend/${type}/${userId}`;
+              const response = await axios.get(endpoint);
+              return response.data || [];
+            } catch (error) {
+              console.error(`Lỗi khi lấy gợi ý ${type}:`, error);
+              speak('Có lỗi khi lấy danh sách truyện.');
+              return [];
+            }
+          };
+        
+          // Hàm xử lý chung khi chọn loại gợi ý
+          const handleRecommendationSelection = async (type) => {
+            callbacks.setSelectedRecommendation(type);
+            localStorage.setItem('selectedRecommendation', type);
+            const recommendationText = getRecommendationText(type);
+            const stories = await fetchRecommendations(type, userIdRef.current);
+            const storyNames = stories
+              .map((story, index) => `${index + 1}. ${story.name || story.title || 'Tên truyện không xác định'}`)
+              .join(', ');
+            speak(`Đang hiển thị ${recommendationText}. Các truyện: ${storyNames || 'Không có truyện'}.`);
+          };
+        
+          // Lệnh thoại để chọn loại gợi ý
+          const recommendationCommands = {
+            all: ['mở tất cả gợi ý', 'hiển thị tất cả gợi ý', 'tất cả gợi ý'],
+            contentBased: ['mở gợi ý dựa trên nội dung', 'hiển thị gợi ý dựa trên nội dung', 'gợi ý nội dung'],
+            collaborative: [
+              'mở gợi ý dựa trên người dùng',
+              'hiển thị gợi ý dựa trên người dùng',
+              'gợi ý người dùng',
+              'gợi ý cộng tác',
+            ],
+            hybrid: ['mở gợi ý kết hợp', 'hiển thị gợi ý kết hợp', 'gợi ý kết hợp'],
+          };
+        
+          // Kiểm tra lệnh thoại
+          for (const [type, commands] of Object.entries(recommendationCommands)) {
+            if (commands.some((cmd) => transcript.includes(cmd))) {
+              if (callbacks.setSelectedRecommendation) {
+                handleRecommendationSelection(type);
+              } else {
+                speak('Không thể + không thể thay đổi gợi ý. Vui lòng thử lại.');
+              }
+              return;
+            }
+          }
+        
+          // Lệnh đọc thông tin trang
           if (
-            transcript.includes('mở tất cả gợi ý') ||
-            transcript.includes('hiển thị tất cả gợi ý') ||
-            transcript.includes('tất cả gợi ý')
+            transcript.includes('đọc thông tin trang') ||
+            transcript.includes('đọc trang') ||
+            transcript.includes('thông tin trang')
           ) {
-            if (callbacks.setSelectedRecommendation) {
-              callbacks.setSelectedRecommendation('all');
-              callbacks.speak('Đang hiển thị tất cả gợi ý.');
-            }
-            return;
-          } else if (
-            transcript.includes('mở gợi ý dựa trên nội dung') ||
-            transcript.includes('hiển thị gợi ý dựa trên nội dung') ||
-            transcript.includes('gợi ý nội dung')
-          ) {
-            if (callbacks.setSelectedRecommendation) {
-              callbacks.setSelectedRecommendation('contentBased');
-              callbacks.speak('Đang hiển thị gợi ý dựa trên nội dung.');
-            }
-            return;
-          } else if (
-            transcript.includes('mở gợi ý dựa trên người dùng') ||
-            transcript.includes('hiển thị gợi ý dựa trên người dùng') ||
-            transcript.includes('gợi ý người dùng') ||
-            transcript.includes('gợi ý cộng tác')
-          ) {
-            if (callbacks.setSelectedRecommendation) {
-              callbacks.setSelectedRecommendation('collaborative');
-              callbacks.speak('Đang hiển thị gợi ý dựa trên người dùng tương tự.');
-            }
-            return;
-          } else if (
-            transcript.includes('mở gợi ý kết hợp') ||
-            transcript.includes('hiển thị gợi ý kết hợp') ||
-            transcript.includes('gợi ý kết hợp')
-          ) {
-            if (callbacks.setSelectedRecommendation) {
-              callbacks.setSelectedRecommendation('hybrid');
-              callbacks.speak('Đang hiển thị gợi ý kết hợp.');
-            }
+            const selectedRecommendation = localStorage.getItem('selectedRecommendation') || 'all';
+            const recommendationText = getRecommendationText(selectedRecommendation);
+            fetchRecommendations(selectedRecommendation, userIdRef.current).then((stories) => {
+              const storyNames = stories
+                .map((story, index) => `${index + 1}. ${story.name || story.title || 'Tên truyện không xác định'}`)
+                .join(', ');
+              speak(`Bạn đang xem ${recommendationText}. Các truyện: ${storyNames || 'Không có truyện'}.`);
+            });
             return;
           }
         }
