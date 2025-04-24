@@ -1,0 +1,146 @@
+const express = require('express');
+const tf = require('@tensorflow/tfjs');
+const use = require('@tensorflow-models/universal-sentence-encoder');
+const router = express.Router();
+
+// Danh sách mẫu lệnh với ý định tương ứng
+const commandTemplates = [
+  { text: 'mở trang chủ', intent: 'navigate_home' },
+  { text: 'đi đến thư viện', intent: 'navigate_library' },
+  { text: 'truyện hot nhất', intent: 'navigate_tophot' },
+  { text: 'danh sách truyện theo dõi', intent: 'navigate_favpage' },
+  { text: 'tìm', intent: 'search_story' },
+  { text: 'gợi ý truyện', intent: 'navigate_recommend' },
+  { text: 'truyện theo độ tuổi', intent: 'navigate_by_age' },
+  { text: 'truyện cho trẻ em', intent: 'navigate_for_kids' },
+  { text: 'nhập độ tuổi', intent: 'navigate_by_age_input' },
+  { text: 'truyện theo giới tính', intent: 'navigate_by_gender' },
+  { text: 'thể loại truyện', intent: 'navigate_genre' },
+  { text: 'thêm vào danh sách đọc', intent: 'add_to_reading_list' },
+  { text: 'theo dõi truyện', intent: 'follow_story' },
+  { text: 'đọc thông tin trang', intent: 'read_page_info' },
+  { text: 'đọc danh sách truyện', intent: 'read_story_list' },
+  { text: 'xóa truyện', intent: 'remove_from_library' },
+  { text: 'đăng xuất', intent: 'logout' },
+  { text: 'đọc từ đầu', intent: 'read_from_start' },
+  { text: 'chương mới nhất', intent: 'read_latest' },
+  { text: 'đọc tiếp', intent: 'continue_reading' },
+  { text: 'chương trước', intent: 'previous_chapter' },
+  { text: 'chương tiếp', intent: 'next_chapter' },
+  { text: 'danh sách chương', intent: 'chapter_list' },
+  { text: 'nghe truyện', intent: 'read_chapter' },
+  { text: 'dừng nghe', intent: 'stop_reading' },
+  { text: 'tiếp tục nghe', intent: 'continue_reading_chapter' },
+  { text: 'bình luận truyện', intent: 'comment' },
+  { text: 'đăng bình luận', intent: 'submit_comment' },
+  { text: 'nhập bình luận', intent: 'input_comment' },
+  { text: 'đánh giá sao', intent: 'rate_story' },
+];
+
+// Tải mô hình Universal Sentence Encoder
+let model;
+(async () => {
+  model = await use.load();
+  console.log('Đã tải Universal Sentence Encoder');
+})();
+
+// Hàm tính độ tương đồng cosine
+function cosineSimilarity(embeddings1, embeddings2) {
+  const dotProduct = tf.sum(tf.mul(embeddings1, embeddings2));
+  const norm1 = tf.norm(embeddings1);
+  const norm2 = tf.norm(embeddings2);
+  return dotProduct.div(norm1.mul(norm2)).dataSync()[0];
+}
+
+// API xử lý lệnh thoại
+router.post('/process-voice', async (req, res) => {
+  const { transcript } = req.body;
+  if (!transcript) {
+    return res.status(400).json({ error: 'Yêu cầu phải có nội dung lệnh' });
+  }
+
+  try {
+    // Nhúng lệnh người dùng
+    const transcriptEmbedding = await model.embed([transcript.toLowerCase()]);
+
+    // Nhúng tất cả mẫu lệnh
+    const templateTexts = commandTemplates.map(cmd => cmd.text.toLowerCase());
+    const templateEmbeddings = await model.embed(templateTexts);
+
+    // Tính độ tương đồng
+    let maxSimilarity = -1;
+    let bestMatchIndex = -1;
+
+    for (let i = 0; i < commandTemplates.length; i++) {
+      const similarity = cosineSimilarity(
+        transcriptEmbedding.slice([0, 0], [1, -1]),
+        templateEmbeddings.slice([i, 0], [1, -1])
+      );
+      if (similarity > maxSimilarity) {
+        maxSimilarity = similarity;
+        bestMatchIndex = i;
+      }
+    }
+
+    // Ngưỡng để coi là khớp (có thể điều chỉnh)
+    if (maxSimilarity > 0.7) {
+      const matchedCommand = commandTemplates[bestMatchIndex];
+      // Trích xuất tham số (nếu có, ví dụ: tên truyện, thể loại, tuổi)
+      const parameters = extractParameters(transcript, matchedCommand.text);
+      res.json({
+        intent: matchedCommand.intent,
+        parameters,
+        confidence: maxSimilarity
+      });
+    } else {
+      res.json({ intent: 'unknown', parameters: {}, confidence: maxSimilarity });
+    }
+  } catch (error) {
+    console.error('Lỗi xử lý lệnh thoại:', error);
+    res.status(500).json({ error: 'Lỗi máy chủ' });
+  }
+});
+
+// Hàm trích xuất tham số (tùy chỉnh theo nhu cầu)
+function extractParameters(transcript, commandText) {
+  const params = {};
+  const transcriptLower = transcript.toLowerCase();
+  
+  // Trích xuất tên truyện khi tìm kiếm
+  if (commandText.includes('tìm truyện') && transcriptLower.startsWith('tìm ')) {
+    params.storyName = transcript.slice(4).trim();
+  }
+  // Trích xuất thể loại
+  if (commandText.includes('thể loại truyện') && (transcriptLower.startsWith('thể loại ') || transcriptLower.startsWith('mở thể loại '))) {
+    params.genre = transcriptLower.replace('thể loại ', '').replace('mở thể loại ', '').trim();
+  }
+  // Trích xuất độ tuổi
+  if (commandText.includes('nhập độ tuổi') && transcriptLower.startsWith('nhập tuổi ')) {
+    params.age = transcriptLower.replace('nhập tuổi ', '').trim();
+  }
+  // Trích xuất nội dung bình luận
+  if (commandText.includes('nhập bình luận') && transcriptLower.startsWith('nhập ')) {
+    params.comment = transcriptLower.replace('nhập ', '').trim();
+  }
+  // Trích xuất đánh giá
+  const ratingMatch = transcriptLower.match(/đánh giá (\d+)\s*sao/);
+  if (ratingMatch) {
+    params.rating = parseInt(ratingMatch[1], 10);
+  }
+  // Trích xuất tên chương
+  if (transcriptLower.includes('chương')) {
+    const parts = transcriptLower.split(' ').filter(part => part);
+    const chapterIndex = parts.findIndex(part => part === 'chương');
+    if (chapterIndex !== -1) {
+      params.chapterName = `Chương ${parts.slice(chapterIndex + 1).join(' ')}`;
+    }
+  }
+  // Trích xuất tên truyện để xóa
+  if (commandText.includes('xóa truyện') && transcriptLower.startsWith('xóa truyện ')) {
+    params.storyName = transcriptLower.replace('xóa truyện ', '').trim();
+  }
+
+  return params;
+}
+
+module.exports = router;
