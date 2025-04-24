@@ -6,6 +6,7 @@ import './Login.css';
 import { Link } from 'react-router-dom';
 import { API_URL } from "../../../env.js";
 
+import useVoiceControl from '../../../utils/voiceControl.js';
 function Login() {
   const history = useNavigate();
 
@@ -44,6 +45,7 @@ function Login() {
     }
   };
 
+  useVoiceControl("", "", "");
   return (
     <div className="login-body">
       <div className="body-overlay"></div>

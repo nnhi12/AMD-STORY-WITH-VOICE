@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import './StoryList.css';
 import { API_URL } from '../../env';
-
+import useVoiceControl from '../../utils/voiceControl.js';
 import Header from '../../layouts/header/User/header.jsx';
 import Footer from '../../layouts/footer/User/footer.jsx';
 import Navbar from '../../components/User/navbar.jsx';
@@ -29,6 +29,8 @@ const StoryByAge = () => {
         fetchStories();
     }, [userId]);
 
+    useVoiceControl("", "", "");
+    
     return (
         <div className="page-container">
             <Header />

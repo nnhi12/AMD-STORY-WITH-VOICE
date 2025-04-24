@@ -4,9 +4,7 @@ const accountSchema = new mongoose.Schema({
     username: String,
     password: String,
     role: String,
-    status: Boolean,
-    start_date: Date,
-    end_date: Date
+    status: Boolean
 }, { versionKey: false }
 );
 

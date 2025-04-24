@@ -188,3 +188,29 @@
   border-radius: 5px;
   font-size: 16px;
 }
+
+.category-select {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  height: 100px; /* Chiều cao để hiển thị nhiều lựa chọn */
+  cursor: pointer;
+}
+
+.category-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.regis-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.regis-form-group select[multiple] {
+  width: 100%;
+}

@@ -1,16 +1,37 @@
 const express = require('express');
 const router = express.Router();
 
+const userModel = require('../models/User.js');
 const accountModel = require('../models/Account.js');
 const storyModel = require('../models/Story.js');
 const authorModel = require('../models/Author.js');
+const ratingModel = require('../models/Rating.js');
+
+// Hàm hỗ trợ để lấy danh sách age_range phù hợp dựa trên tuổi của user
+function getSuitableAgeRanges(userAge) {
+    const ageRanges = ['<13', '13-17', '18+', '21+'];
+    if (userAge < 13) return ['<13'];
+    if (userAge <= 17) return ['<13', '13-17'];
+    if (userAge <= 20) return ['<13', '13-17', '18+'];
+    return ageRanges; // age >= 21, phù hợp với tất cả
+}
 
 router.get("/stories", async (req, res) => {
     try {
-        const { minChapters, maxChapters } = req.query;
+        const { minChapters, maxChapters, userID } = req.query;
+
+        // Lấy thông tin user nếu có userID
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+']; // Mặc định cho phép tất cả nếu không có user
+        if (userID) {
+            const user = await userModel.findById(userID);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
+        }
 
         // Xây dựng bộ lọc
-        const filter = {};
+        const filter = { age_range: { $in: suitableAgeRanges } };
         if (minChapters) filter.chapterCount = { $gte: parseInt(minChapters) };
         if (maxChapters) filter.chapterCount = { ...filter.chapterCount, $lte: parseInt(maxChapters) };
 
@@ -21,33 +42,33 @@ router.get("/stories", async (req, res) => {
         const stories = await storyModel.aggregate([
             {
                 $lookup: {
-                    from: 'chapters', // Collection chứa chapters
-                    localField: 'chapters', // Liên kết giữa story và chapter
+                    from: 'chapters',
+                    localField: 'chapters',
                     foreignField: '_id',
                     as: 'chapterDetails'
                 }
             },
             {
                 $addFields: {
-                    chapterCount: { $size: '$chapterDetails' }, // Thêm trường chapterCount
+                    chapterCount: { $size: '$chapterDetails' },
                     disabled: {
                         $cond: {
-                            if: { $eq: ['$date_closed', null] }, // Kiểm tra nếu date_closed là null
-                            then: false, // Nếu null, không disabled
-                            else: { $gte: [currentDate, '$date_closed'] } // Nếu không null, so sánh với ngày hiện tại
+                            if: { $eq: ['$date_closed', null] },
+                            then: false,
+                            else: { $gte: [currentDate, '$date_closed'] }
                         }
-                    } // Kiểm tra ngày đóng truyện
+                    }
                 }
             },
             {
-                $match: filter // Lọc theo chapterCount
+                $match: filter
             }
         ]);
 
         // Chuyển đổi Buffer hình ảnh sang Base64
         const modifiedStories = stories.map(story => ({
             ...story,
-            image: story.image ? story.image.toString('base64') : null, // Chuyển đổi hình ảnh
+            image: story.image ? story.image.toString('base64') : null,
         }));
 
         res.json(modifiedStories);
@@ -57,18 +78,27 @@ router.get("/stories", async (req, res) => {
     }
 });
 
-
-
 router.get("/searchstory", async (req, res) => {
-    const query = req.query.name; // Lấy từ khóa tìm kiếm từ query string
+    const { name, userID } = req.query;
 
     try {
-        // Tìm kiếm các truyện có tên chứa từ khóa tìm kiếm, không phân biệt chữ hoa, chữ thường
+        // Lấy thông tin user nếu có userID
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
+        if (userID) {
+            const user = await userModel.findById(userID);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
+        }
+
+        // Tìm kiếm truyện theo tên và độ tuổi phù hợp
         const stories = await storyModel.find({
-            name: { $regex: query, $options: 'i' },
+            name: { $regex: name, $options: 'i' },
+            age_range: { $in: suitableAgeRanges },
             $or: [
-                { date_closed: { $gt: new Date() } }, // Kiểm tra nếu date_closed lớn hơn hoặc bằng ngày hiện tại
-                { date_closed: { $eq: null } } // Kiểm tra nếu date_closed là null
+                { date_closed: { $gt: new Date() } },
+                { date_closed: { $eq: null } }
             ]
         });
 
@@ -82,14 +112,29 @@ router.get("/searchstory", async (req, res) => {
         console.error('Error searching stories:', error);
         res.status(500).send('Error searching stories');
     }
-}
-);
+});
 
 router.get('/stories/:storyId', async (req, res) => {
     try {
-        const story = await storyModel.findById(req.params.storyId);
+        const { userID } = req.query;
+
+        // Lấy thông tin user nếu có userID
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
+        if (userID) {
+            const user = await userModel.findById(userID);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
+        }
+
+        // Tìm truyện và kiểm tra độ tuổi phù hợp
+        const story = await storyModel.findOne({
+            _id: req.params.storyId,
+            age_range: { $in: suitableAgeRanges }
+        });
         if (!story) {
-            return res.status(404).send('Story not found');
+            return res.status(404).send('Story not found or not suitable for your age');
         }
 
         const author = await authorModel.findOne({ stories: story._id });
@@ -108,12 +153,27 @@ router.get('/stories/:storyId', async (req, res) => {
 
 router.get('/stories/:storyId/chapters', async (req, res) => {
     try {
-        const story = await storyModel.findById(req.params.storyId).populate('chapters');
-        if (!story) {
-            console.error('Story not found:', req.params.storyId);
-            return res.status(404).send('Story not found');
+        const { userID } = req.query;
+
+        // Lấy thông tin user nếu có userID
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
+        if (userID) {
+            const user = await userModel.findById(userID);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
         }
-        console.log('Found story:', story);
+
+        // Tìm truyện và kiểm tra độ tuổi phù hợp
+        const story = await storyModel.findOne({
+            _id: req.params.storyId,
+            age_range: { $in: suitableAgeRanges }
+        }).populate('chapters');
+        if (!story) {
+            console.error('Story not found or not suitable for your age:', req.params.storyId);
+            return res.status(404).send('Story not found or not suitable for your age');
+        }
         res.json(story.chapters);
     } catch (err) {
         console.error('Error fetching chapters:', err);
@@ -121,14 +181,28 @@ router.get('/stories/:storyId/chapters', async (req, res) => {
     }
 });
 
-
 router.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
     try {
-        // Tìm câu chuyện theo storyId
-        const story = await storyModel.findById(req.params.storyId).populate('chapters');
+        const { userID } = req.query;
+
+        // Lấy thông tin user nếu có userID
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
+        if (userID) {
+            const user = await userModel.findById(userID);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
+        }
+
+        // Tìm truyện và kiểm tra độ tuổi phù hợp
+        const story = await storyModel.findOne({
+            _id: req.params.storyId,
+            age_range: { $in: suitableAgeRanges }
+        }).populate('chapters');
         if (!story) {
-            console.error('Story not found:', req.params.storyId);
-            return res.status(404).send('Story not found');
+            console.error('Story not found or not suitable for your age:', req.params.storyId);
+            return res.status(404).send('Story not found or not suitable for your age');
         }
 
         // Kiểm tra nếu chapters là một mảng và tìm chapter
@@ -145,7 +219,6 @@ router.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
         const previousChapter = chapterIndex > 0 ? story.chapters[chapterIndex - 1] : null;
         const nextChapter = chapterIndex < story.chapters.length - 1 ? story.chapters[chapterIndex + 1] : null;
 
-        console.log('Found chapter:', chapter);
         res.json({
             chapter,
             previousId: previousChapter ? previousChapter._id : null,
@@ -157,23 +230,28 @@ router.get('/stories/:storyId/chapters/:chapterId', async (req, res) => {
     }
 });
 
-
 router.get('/stories/:storyId/first', async (req, res) => {
     try {
         const { accountId } = req.query;
 
-        let account = null;
+        // Lấy thông tin user nếu có userID
+        let user = null;
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
         if (accountId) {
-            account = await accountModel.findById(accountId);
-            if (!account) {
-                return res.status(404).json({ message: "Account not found" });
+            user = await accountModel.findById(accountId);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
             }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
         }
 
-        const story = await storyModel.findById(req.params.storyId).populate('chapters');
-
+        // Tìm truyện và kiểm tra độ tuổi phù hợp
+        const story = await storyModel.findOne({
+            _id: req.params.storyId,
+            age_range: { $in: suitableAgeRanges }
+        }).populate('chapters');
         if (!story) {
-            return res.status(404).send('Story not found');
+            return res.status(404).send('Story not found or not suitable for your age');
         }
 
         if (!story.chapters || story.chapters.length === 0) {
@@ -186,18 +264,18 @@ router.get('/stories/:storyId/first', async (req, res) => {
         }
 
         let enableChapter = false;
-        if (!account && firstChapter.status === false) {
-            enableChapter = true; // Disabled if account._id is null
-        } else if (!account && firstChapter.status === true) {
-            enableChapter = false; // Both account and chapter are disabled
-        } else if (account.status === false && firstChapter.status === false) {
-            enableChapter = true; // Both account and chapter are disabled
-        } else if (account.status === true && firstChapter.status === false) {
-            enableChapter = true; // Account enabled, chapter disabled
-        } else if (account.status === false && firstChapter.status === true) {
-            enableChapter = false; // Account disabled, chapter enabled
-        } else if (account.status === true && firstChapter.status === true) {
-            enableChapter = true; // Both account and chapter are enabled
+        if (!user && firstChapter.status === false) {
+            enableChapter = true;
+        } else if (!user && firstChapter.status === true) {
+            enableChapter = false;
+        } else if (user.status === false && firstChapter.status === false) {
+            enableChapter = true;
+        } else if (user.status === true && firstChapter.status === false) {
+            enableChapter = true;
+        } else if (user.status === false && firstChapter.status === true) {
+            enableChapter = false;
+        } else if (user.status === true && firstChapter.status === true) {
+            enableChapter = true;
         }
 
         res.json({
@@ -214,18 +292,24 @@ router.get('/stories/:storyId/latest', async (req, res) => {
     try {
         const { accountId } = req.query;
 
-        let account = null;
+        // Lấy thông tin user nếu có userID
+        let user = null;
+        let suitableAgeRanges = ['<13', '13-17', '18+', '21+'];
         if (accountId) {
-            account = await accountModel.findById(accountId);
-            if (!account) {
-                return res.status(404).json({ message: "Account not found" });
+            user = await accountModel.findById(accountId);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
             }
+            suitableAgeRanges = getSuitableAgeRanges(user.age);
         }
 
-        const story = await storyModel.findById(req.params.storyId).populate('chapters');
-
+        // Tìm truyện và kiểm tra độ tuổi phù hợp
+        const story = await storyModel.findOne({
+            _id: req.params.storyId,
+            age_range: { $in: suitableAgeRanges }
+        }).populate('chapters');
         if (!story) {
-            return res.status(404).send('Story not found');
+            return res.status(404).send('Story not found or not suitable for your age');
         }
 
         if (!story.chapters || story.chapters.length === 0) {
@@ -238,18 +322,18 @@ router.get('/stories/:storyId/latest', async (req, res) => {
         }
 
         let enableChapter = false;
-        if (!account && latestChapter.status === false) {
-            enableChapter = true; // Disabled if account._id is null
-        } else if (!account && latestChapter.status === true) {
-            enableChapter = false; // Both account and chapter are disabled
-        } else if (account.status === false && latestChapter.status === false) {
-            enableChapter = true; // Both account and chapter are disabled
-        } else if (account.status === true && latestChapter.status === false) {
-            enableChapter = true; // Account enabled, chapter disabled
-        } else if (account.status === false && latestChapter.status === true) {
-            enableChapter = false; // Account disabled, chapter enabled
-        } else if (account.status === true && latestChapter.status === true) {
-            enableChapter = true; // Both account and chapter are enabled
+        if (!user && latestChapter.status === false) {
+            enableChapter = true;
+        } else if (!user && latestChapter.status === true) {
+            enableChapter = false;
+        } else if (user.status === false && latestChapter.status === false) {
+            enableChapter = true;
+        } else if (user.status === true && latestChapter.status === false) {
+            enableChapter = true;
+        } else if (user.status === false && latestChapter.status === true) {
+            enableChapter = false;
+        } else if (user.status === true && latestChapter.status === true) {
+            enableChapter = true;
         }
 
         res.json({
@@ -262,5 +346,52 @@ router.get('/stories/:storyId/latest', async (req, res) => {
     }
 });
 
+router.get('/stories/:storyId/rating', async (req, res) => {
+    try {
+        const storyId = req.params.storyId;
+        const ratings = await ratingModel.find({ story_id: storyId });
+
+        if (ratings.length === 0) {
+            return res.json({ averageRating: 0, totalRatings: 0 });
+        }
+
+        const totalRatings = ratings.length;
+        const sumRatings = ratings.reduce((sum, rating) => sum + rating.rating, 0);
+        const averageRating = (sumRatings / totalRatings).toFixed(1);
+
+        res.json({ averageRating, totalRatings });
+    } catch (error) {
+        console.error('Error fetching story rating:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+router.post('/stories/:storyId/rating', async (req, res) => {
+    try {
+        const { user, rating } = req.body;
+        const storyId = req.params.storyId;
+
+        let existingRating = await ratingModel.findOne({ user_id: user, story_id: storyId });
+
+        if (existingRating) {
+            existingRating.rating = rating;
+            existingRating.created_at = new Date();
+            await existingRating.save();
+        } else {
+            const newRating = new ratingModel({
+                user_id: user,
+                story_id: storyId,
+                rating: rating,
+                created_at: new Date(),
+            });
+            await newRating.save();
+        }
+
+        res.status(200).send('Rating submitted successfully');
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        res.status(500).send('Server error');
+    }
+});
 
 module.exports = router;

@@ -96,6 +96,17 @@
   color: #d32f2f;
 }
 
+.payment-right p {
+  font-size: 18px;
+  color: #28a745;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.payment-right p span {
+  font-weight: bold;
+}
+
 @media (max-width: 860px) {
   .payment-title {
     font-size: 25px;

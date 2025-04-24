@@ -3,6 +3,7 @@ const router = express.Router();
 
 const accountModel = require('../models/Account.js');
 const userModel = require('../models/User.js');
+const subscriptionModel = require('../models/Subcription.js');
 
 router.post("/login", async (req, res) => {
     // Lấy tên đăng nhập và mật khẩu từ yêu cầu
@@ -38,30 +39,35 @@ router.post("/login", async (req, res) => {
 });
 
 
-router.post("/register", async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
-        const { username, password, email, age, gender } = req.body;
+        const { username, password, email, age, gender, preferred_categories } = req.body;
 
         // Kiểm tra xem username đã tồn tại chưa
         const existingAccount = await accountModel.findOne({ username });
         if (existingAccount) {
-            return res.status(400).json({ message: "Username already exists. Please choose a different username." });
+            return res.status(400).json({ message: 'Username already exists. Please choose a different username.' });
         }
 
         // Kiểm tra xem email đã tồn tại chưa
         const existingEmail = await userModel.findOne({ email });
         if (existingEmail) {
-            return res.status(400).json({ message: "Email already exists. Please use a different email." });
+            return res.status(400).json({ message: 'Email already exists. Please use a different email.' });
         }
 
         // Kiểm tra age là số hợp lệ
-        if (typeof age !== "number" || age < 0) {
-            return res.status(400).json({ message: "Invalid age provided." });
+        if (typeof age !== 'number' || age < 0) {
+            return res.status(400).json({ message: 'Invalid age provided.' });
         }
 
         // Kiểm tra gender hợp lệ
-        if (!["male", "female", "other"].includes(gender)) {
-            return res.status(400).json({ message: "Invalid gender provided." });
+        if (!['male', 'female', 'other'].includes(gender)) {
+            return res.status(400).json({ message: 'Invalid gender provided.' });
+        }
+
+        // Kiểm tra preferred_categories là mảng hợp lệ
+        if (preferred_categories && !Array.isArray(preferred_categories)) {
+            return res.status(400).json({ message: 'Preferred categories must be an array.' });
         }
 
         // Tạo tài khoản mới
@@ -69,22 +75,34 @@ router.post("/register", async (req, res) => {
             username,
             password,
             role: 'user',
-            status: false,
+            status: false, // Đặt status là true để tài khoản hoạt động ngay
         });
 
-        // Tạo user mới với age và gender
+        // Tạo user mới
         const user = await userModel.create({
             account: account._id,
-            fullname: "",
+            fullname: '',
             email,
             age,
             gender,
+            preferred_categories: preferred_categories || [], // Lưu danh sách thể loại
         });
 
-        res.json({ account, user });
+        const subscription = await subscriptionModel.create({
+            account: account._id,
+            start_date: null,
+            expired_date: null,
+        });
+
+        res.status(201).json({
+            message: 'Registration successful.',
+            account,
+            user,
+            subscription,
+        });
     } catch (error) {
-        console.error("Error during registration:", error);
-        res.status(500).json({ message: "An error occurred during registration. Please try again later." });
+        console.error('Error during registration:', error);
+        res.status(500).json({ message: 'An error occurred during registration. Please try again later.' });
     }
 });
 
