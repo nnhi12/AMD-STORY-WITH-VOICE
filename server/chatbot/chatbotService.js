@@ -35,6 +35,18 @@ const commandTemplates = [
   { text: 'đăng bình luận', intent: 'submit_comment' },
   { text: 'nhập bình luận', intent: 'input_comment' },
   { text: 'đánh giá sao', intent: 'rate_story' },
+  // Thêm mẫu câu hỏi mở
+  { text: 'tác giả viết truyện mới', intent: 'story_related_unknown' },
+  { text: 'truyện có phần tiếp theo', intent: 'story_related_unknown' },
+  { text: 'tác giả là ai', intent: 'story_related_unknown' },
+  { text: 'truyện này thế nào', intent: 'story_related_unknown' },
+];
+
+// Danh sách từ khóa liên quan đến truyện
+const storyRelatedKeywords = [
+  'truyện', 'chương', 'thể loại', 'đọc', 'bình luận', 'đánh giá', 'tìm',
+  'gợi ý', 'theo dõi', 'thư viện', 'trang chủ', 'hot', 'tuổi', 'giới tính',
+  'nghe', 'dừng', 'tiếp tục', 'xóa', 'đăng xuất', 'đăng nhập', 'tác giả', 'chuyện'
 ];
 
 // Tải mô hình Universal Sentence Encoder
@@ -52,6 +64,14 @@ function cosineSimilarity(embeddings1, embeddings2) {
   return dotProduct.div(norm1.mul(norm2)).dataSync()[0];
 }
 
+// Hàm kiểm tra xem câu có phải là câu hỏi
+function isQuestion(transcriptLower) {
+  const questionIndicators = [
+    'chứ', 'không', 'à', 'sẽ', 'là ai', 'thế nào', 'khi nào', 'ở đâu', 'tại sao'
+  ];
+  return questionIndicators.some(indicator => transcriptLower.includes(indicator));
+}
+
 // API xử lý lệnh thoại
 router.post('/process-voice', async (req, res) => {
   const { transcript } = req.body;
@@ -60,8 +80,33 @@ router.post('/process-voice', async (req, res) => {
   }
 
   try {
+    const transcriptLower = transcript.toLowerCase();
+
+    // Kiểm tra xem câu hỏi có liên quan đến truyện không
+    const isStoryRelated = storyRelatedKeywords.some(keyword => transcriptLower.includes(keyword));
+
+    if (!isStoryRelated) {
+      return res.json({
+        intent: 'unrelated',
+        parameters: {},
+        confidence: 1.0,
+        message: 'Ôi, cái này mình không rành lắm đâu! Bạn muốn hỏi gì về truyện không?'
+      });
+    }
+
+    // Kiểm tra xem có phải câu hỏi
+    if (isQuestion(transcriptLower)) {
+      console.log('Detected as question:', transcriptLower);
+      return res.json({
+        intent: 'story_related_unknown',
+        parameters: {},
+        confidence: 1.0,
+        message: 'Câu hỏi này thú vị đấy! Mình sẽ hỏi người quản trị và gửi câu trả lời qua email của bạn nhé'
+      });
+    }
+
     // Nhúng lệnh người dùng
-    const transcriptEmbedding = await model.embed([transcript.toLowerCase()]);
+    const transcriptEmbedding = await model.embed([transcriptLower]);
 
     // Nhúng tất cả mẫu lệnh
     const templateTexts = commandTemplates.map(cmd => cmd.text.toLowerCase());
@@ -82,18 +127,24 @@ router.post('/process-voice', async (req, res) => {
       }
     }
 
-    // Ngưỡng để coi là khớp (có thể điều chỉnh)
-    if (maxSimilarity > 0.7) {
+    // Ngưỡng để coi là khớp
+    if (maxSimilarity > 0.9) {
       const matchedCommand = commandTemplates[bestMatchIndex];
-      // Trích xuất tham số (nếu có, ví dụ: tên truyện, thể loại, tuổi)
       const parameters = extractParameters(transcript, matchedCommand.text);
+      console.log('Transcript:', transcript, 'Best match:', matchedCommand.text, 'Similarity:', maxSimilarity);
       res.json({
         intent: matchedCommand.intent,
         parameters,
         confidence: maxSimilarity
       });
     } else {
-      res.json({ intent: 'unknown', parameters: {}, confidence: maxSimilarity });
+      console.log('Story-related but no command match for:', transcript, 'Best similarity:', maxSimilarity);
+      res.json({
+        intent: 'story_related_unknown',
+        parameters: {},
+        confidence: maxSimilarity,
+        message: 'Câu hỏi này thú vị đấy! Mình sẽ hỏi người quản trị và gửi câu trả lời qua email của bạn nhé'
+      });
     }
   } catch (error) {
     console.error('Lỗi xử lý lệnh thoại:', error);
@@ -101,13 +152,13 @@ router.post('/process-voice', async (req, res) => {
   }
 });
 
-// Hàm trích xuất tham số (tùy chỉnh theo nhu cầu)
+// Hàm trích xuất tham số
 function extractParameters(transcript, commandText) {
   const params = {};
   const transcriptLower = transcript.toLowerCase();
-  
+
   // Trích xuất tên truyện khi tìm kiếm
-  if (commandText.includes('tìm truyện') && transcriptLower.startsWith('tìm ')) {
+  if (commandText.includes('tìm') && transcriptLower.startsWith('tìm ')) {
     params.storyName = transcript.slice(4).trim();
   }
   // Trích xuất thể loại
@@ -127,8 +178,8 @@ function extractParameters(transcript, commandText) {
   if (ratingMatch) {
     params.rating = parseInt(ratingMatch[1], 10);
   }
-  // Trích xuất tên chương
-  if (transcriptLower.includes('chương')) {
+  // Trích xuất tên chương (chỉ khi không phải lệnh đánh giá)
+  if (transcriptLower.includes('chương') && !transcriptLower.includes('đánh giá')) {
     const parts = transcriptLower.split(' ').filter(part => part);
     const chapterIndex = parts.findIndex(part => part === 'chương');
     if (chapterIndex !== -1) {

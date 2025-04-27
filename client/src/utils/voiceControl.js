@@ -3,11 +3,26 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../env';
 
-const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex, callbacks, nextId, previousId, userId, commentText, chapterId, setAge, fetchStories, setStories }) => {
+const useVoiceControl = ({
+  chapters,
+  storyId,
+  chapterData,
+  currentParagraphIndex,
+  callbacks,
+  nextId,
+  previousId,
+  userId,
+  commentText,
+  chapterId,
+  setAge,
+  fetchStories,
+  setStories,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
+  const [isChapterFinished, setIsChapterFinished] = useState(false);
   const isChapterPage = location.pathname.includes('/chapters');
   const [categories, setCategories] = useState([]);
   const userIdRef = useRef(userId);
@@ -16,22 +31,71 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
   const commentTextRef = useRef(commentText);
   const chapterIdRef = useRef(chapterId);
   const currentParagraphIndexRef = useRef(currentParagraphIndex);
-  const isChapterFinishedRef = useRef(false);
   const isAskingForRatingRef = useRef(false);
   const isWaitingForRatingRef = useRef(false);
   const lastSpokenPathRef = useRef(null);
 
+  // Hàm speak với debug và kiểm tra
   const speak = (text, callback) => {
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'vi-VN';
+    utterance.lang = "vi-VN";
     const voices = synth.getVoices();
-    const vietnameseVoice = voices.find(voice => voice.lang === 'vi-VN');
+    const vietnameseVoice = voices.find(voice => voice.lang === "vi-VN");
     if (vietnameseVoice) utterance.voice = vietnameseVoice;
     if (callback) utterance.onend = callback;
     synth.speak(utterance);
   };
 
+  // Xử lý phím Ctrl với keydown/keyup (tương tự code cũ của bạn)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey) {
+        console.log('KeyDown:', {
+          ctrlKey: event.ctrlKey,
+          isListening,
+          recognitionExists: !!recognitionRef.current,
+        });
+        if (!isListening && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+            setIsListening(true);
+            console.log('SpeechRecognition started');
+            speak('Mic đã bật, hãy nói lệnh của bạn.');
+          } catch (error) {
+            console.error('Lỗi khi bật mic:', error);
+            speak('Không thể bật mic, vui lòng kiểm tra quyền truy cập.');
+          }
+        }
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (!event.ctrlKey) {
+        console.log('KeyUp:', {
+          ctrlKey: event.ctrlKey,
+          isListening,
+          recognitionExists: !!recognitionRef.current,
+        });
+        if (isListening && recognitionRef.current) {
+          recognitionRef.current.stop();
+          setIsListening(false);
+          console.log('SpeechRecognition stopped');
+          speak('Mic đã tắt.');
+        }
+      }
+    };
+
+    console.log('Attaching keydown/keyup listeners');
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isListening]);
+
+  // Page name mapping
   const pageNameMap = {
     '/': 'chủ',
     '/register': 'đăng ký',
@@ -50,11 +114,13 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     '/by-gender': 'truyện theo giới tính',
   };
 
+  // Announce page changes
   useEffect(() => {
     let timeoutId;
     const getPageName = () => {
       if (location.pathname.startsWith('/storyinfo/')) return 'thông tin truyện';
-      if (location.pathname.startsWith('/stories/') && location.pathname.includes('/chapters/')) return 'nội dung chương';
+      if (location.pathname.startsWith('/stories/') && location.pathname.includes('/chapters/'))
+        return 'nội dung chương';
       if (location.pathname.startsWith('/classifiedbygenre/')) return 'truyện theo thể loại';
       if (location.pathname.startsWith('/category/')) return 'truyện theo danh mục';
       if (location.pathname.startsWith('/classifiedbychapter?')) return 'truyện theo tổng chương';
@@ -74,6 +140,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     return () => clearTimeout(timeoutId);
   }, [location.pathname]);
 
+  // Update refs
   useEffect(() => {
     nextIdRef.current = nextId;
     previousIdRef.current = previousId;
@@ -81,15 +148,14 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     commentTextRef.current = commentText;
     chapterIdRef.current = chapterId;
     currentParagraphIndexRef.current = currentParagraphIndex;
-    console.log('Props cập nhật - previousId:', previousId, 'nextId:', nextId, 'chapterId:', chapterId);
   }, [nextId, previousId, userId, commentText, chapterId, currentParagraphIndex]);
 
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(`${API_URL}/categories`);
         setCategories(response.data);
-        console.log('Categories loaded:', response.data);
       } catch (error) {
         console.error('Error fetching categories:', error);
         speak('Không thể tải danh sách thể loại.');
@@ -98,20 +164,22 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     fetchCategories();
   }, []);
 
+  // Handle chapter completion
   useEffect(() => {
-    if (isChapterFinishedRef.current && !isAskingForRatingRef.current) {
+    if (isChapterFinished && !isAskingForRatingRef.current) {
       isAskingForRatingRef.current = true;
       speak('Bạn có muốn đánh giá truyện này không? Hãy nói "có" hoặc "không".');
       setTimeout(() => {
         if (isAskingForRatingRef.current) {
           speak('Bạn đã không trả lời. Cảm ơn bạn đã đọc truyện!');
           isAskingForRatingRef.current = false;
-          isChapterFinishedRef.current = false;
+          setIsChapterFinished(false);
         }
       }, 20000);
     }
-  }, [isChapterFinishedRef.current]);
+  }, [isChapterFinished]);
 
+  // Initialize SpeechRecognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -133,7 +201,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           console.log('VoiceControl nghe được:', transcript);
           const isSpeaking = JSON.parse(localStorage.getItem('is_Speaking')) || false;
 
-          // Xử lý khi đang hỏi về đánh giá
+          // Handle rating prompt
           if (isAskingForRatingRef.current) {
             if (transcript === 'có' || transcript === 'không') {
               if (callbacks.onRatingDecision) {
@@ -150,19 +218,20 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý đánh giá sao
-          if (isWaitingForRatingRef.current) {
+          // Handle rating submission
+          if (isWaitingForRatingRef.current || location.pathname.startsWith('/storyinfo')) {
             const ratingMatch = transcript.match(/^đánh giá (\d+)\s*sao$/);
+            const user = localStorage.getItem('userId');
             if (ratingMatch) {
               const rating = parseInt(ratingMatch[1], 10);
               if (rating >= 1 && rating <= 5) {
-                if (!userIdRef.current) {
+                if (!user) {
                   speak('Vui lòng đăng nhập để đánh giá truyện.');
                   return;
                 }
                 try {
                   await axios.post(`${API_URL}/stories/${storyId}/rating`, {
-                    user: userIdRef.current,
+                    user: user,
                     rating,
                   });
                   speak(`Bạn đã đánh giá ${rating} sao. Cảm ơn bạn! Đang làm mới trang.`, () => {
@@ -176,11 +245,11 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               } else {
                 speak('Vui lòng nói một số từ 1 đến 5, ví dụ "đánh giá 4 sao".');
               }
+              return;
             }
-            return;
           }
 
-          // Xử lý lệnh đăng xuất
+          // Handle logout
           if (transcript.includes('đăng xuất')) {
             const userId = localStorage.getItem('accountId');
             if (!userId) {
@@ -193,7 +262,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               const confirmationTranscript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
               if (confirmationTranscript.includes('xác nhận')) {
                 localStorage.removeItem('username');
-                localStorage.removeItem('userID');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('accountId');
                 localStorage.removeItem('vipExpiredNotificationShown');
                 navigate('/login');
                 recog.onresult = originalOnResult;
@@ -208,7 +278,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý lệnh đăng nhập
+          // Handle login
           if (location.pathname === '/login') {
             if (transcript.startsWith('nhập tên đăng nhập ')) {
               const username = transcript.replace('nhập tên đăng nhập ', '').trim();
@@ -239,7 +309,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             }
           }
 
-          // Xử lý lệnh trên trang /colab-recommend
+          // Handle recommendation page
           if (location.pathname === '/colab-recommend') {
             const getRecommendationText = (selectedRecommendation) => {
               switch (selectedRecommendation) {
@@ -311,14 +381,12 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             }
           }
 
-          // Xử lý đọc danh sách truyện trên trang chủ
+          // Handle homepage story list
           if (location.pathname === '/' && transcript.includes('đọc danh sách truyện')) {
             const readStoryList = async () => {
               try {
                 const response = await axios.get(`${API_URL}/stories`);
                 const stories = response.data;
-                console.log('Dữ liệu truyện nhận được:', stories);
-
                 if (!stories || stories.length === 0) {
                   speak('Hiện tại không có truyện nào trong danh sách.');
                   return;
@@ -332,18 +400,15 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
                       const story = stories[index];
                       if (story.name) {
                         speak(story.name, () => {
-                          console.log(`Đã đọc truyện: ${story.name}`);
                           index++;
                           readNextStory();
                         });
                       } else {
-                        console.warn(`Truyện tại index ${index} không có tên:`, story);
                         index++;
                         readNextStory();
                       }
                     } else {
                       localStorage.setItem('is_Speaking', JSON.stringify(false));
-                      console.log('Hoàn thành đọc danh sách truyện.');
                       speak('Đã đọc xong danh sách truyện.');
                     }
                   };
@@ -358,7 +423,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý xóa truyện khỏi thư viện
+          // Handle remove story from library
           if (location.pathname === '/library' && transcript.startsWith('xóa truyện ')) {
             if (!localStorage.getItem('accountId')) {
               speak('Bạn cần đăng nhập để xóa truyện khỏi thư viện.');
@@ -427,7 +492,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý đọc danh sách truyện trong thư viện
+          // Handle library stories
           if (location.pathname === '/library' && transcript.includes('đọc thông tin trang')) {
             const readLibraryStories = async () => {
               const accountId = localStorage.getItem('accountId');
@@ -439,8 +504,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               try {
                 const response = await axios.get(`${API_URL}/users/${accountId}/readingstories`);
                 const stories = response.data;
-                console.log('Dữ liệu truyện trong thư viện:', stories);
-
                 if (!stories || stories.length === 0) {
                   speak('Thư viện của bạn hiện không có truyện nào.');
                   return;
@@ -454,18 +517,15 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
                       const story = stories[index];
                       if (story.name) {
                         speak(story.name, () => {
-                          console.log(`Đã đọc truyện: ${story.name}`);
                           index++;
                           readNextStory();
                         });
                       } else {
-                        console.warn(`Truyện tại index ${index} không có tên:`, story);
                         index++;
                         readNextStory();
                       }
                     } else {
                       localStorage.setItem('is_Speaking', JSON.stringify(false));
-                      console.log('Hoàn thành đọc danh sách truyện trong thư viện.');
                       speak('Đã đọc xong danh sách truyện trong thư viện.');
                     }
                   };
@@ -481,7 +541,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý nhập tuổi trên trang /by-age-input
+          // Handle age input
           if (location.pathname === '/by-age-input' && transcript.startsWith('nhập tuổi ')) {
             const ageStr = transcript.replace('nhập tuổi ', '').trim();
             const age = parseInt(ageStr, 10);
@@ -498,7 +558,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               try {
                 const response = await axios.get(`${API_URL}/statistical/by-age`, { params: { age } });
                 const stories = response.data;
-                console.log('API trả về danh sách truyện:', stories);
                 setStories(stories);
                 speak(`Đã tìm thấy ${stories.length} truyện phù hợp với độ tuổi ${age}.`);
               } catch (error) {
@@ -515,7 +574,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý các lệnh điều hướng chung
+          // Handle navigation
           if (transcript.includes('trang chủ')) {
             speak('Đang quay lại trang chủ.', () => navigate('/'));
             return;
@@ -609,7 +668,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             return;
           }
 
-          // Xử lý lệnh trên trang /storyinfo
+          // Handle story info page
           if (transcript.includes('thêm vào danh sách đọc') && location.pathname.startsWith('/storyinfo')) {
             const userId = localStorage.getItem('accountId');
             const currentStoryId = location.pathname.split('/storyinfo/')[1];
@@ -720,8 +779,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               return;
             } else {
               const normalizeChapterName = (text) => {
-                const parts = text.split(' ').filter(part => part);
-                const chapterIndex = parts.findIndex(part => part === 'chương');
+                const parts = text.split(' ').filter((part) => part);
+                const chapterIndex = parts.findIndex((part) => part === 'chương');
                 if (chapterIndex !== -1) {
                   const chapterNum = parts.slice(chapterIndex + 1).join(' ');
                   return `Chương ${chapterNum}`;
@@ -730,8 +789,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               };
 
               const chapterName = normalizeChapterName(transcript);
-              console.log('Chapter name gửi đi:', chapterName);
-
               const findChapter = async () => {
                 try {
                   const response = await axios.get(
@@ -751,7 +808,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             }
           }
 
-          // Xử lý lệnh trên trang chương
+          // Handle chapter page
           if (chapterData && callbacks) {
             const {
               toggleDropdown,
@@ -768,9 +825,9 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               onChapterFinished,
             } = callbacks;
 
-            const paragraphs = chapterData.chapter?.content?.split('\n').filter(p => p.trim()) || [];
-            if (currentParagraphIndexRef.current === paragraphs.length - 1 && !isSpeaking && !isChapterFinishedRef.current) {
-              isChapterFinishedRef.current = true;
+            const paragraphs = chapterData.chapter?.content?.split('\n').filter((p) => p.trim()) || [];
+            if (currentParagraphIndexRef.current === paragraphs.length - 1 && !isSpeaking && !isChapterFinished) {
+              setIsChapterFinished(true);
             }
 
             if (transcript.includes('chương trước') && previousIdRef.current) {
@@ -783,17 +840,14 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
               speak('Đang mở danh sách chương', toggleDropdown);
               return;
             } else if (transcript.includes('nghe truyện') && !isSpeaking) {
-              console.log('Triggering handleReadChapter');
               speak('Đang bắt đầu nghe truyện', handleReadChapter(JSON.parse(localStorage.getItem('chapter_paragraph'))));
               return;
             } else if (transcript.includes('dừng nghe')) {
-              console.log('Triggering handleStop');
               handleStopReading();
               speak('Đã dừng nghe truyện');
               return;
             } else if (transcript.includes('tiếp tục nghe') && !isSpeaking) {
               if (currentParagraphIndexRef.current > 0) {
-                console.log('Triggering handleContinueReading');
                 handleContinueReading();
                 speak('Đang tiếp tục nghe truyện');
                 return;
@@ -802,7 +856,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
                 return;
               }
             } else if (transcript.includes('đọc lại từ đầu')) {
-              console.log('Triggering handleReadFromBeginning');
               speak('Đang đọc lại từ đầu chương');
               handleReadFromBeginning();
               return;
@@ -822,12 +875,22 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
             }
           }
 
-          // Nếu không xử lý cục bộ, gửi đến chatbot
+          // Send to chatbot if no local command
           if (!handleCommand(transcript)) {
             try {
               const response = await axios.post(`${API_URL}/chatbot/process-voice`, { transcript });
               console.log('Backend response:', response.data);
-              const { intent, parameters, confidence } = response.data;
+              const { intent, parameters, confidence, message } = response.data;
+
+              if (intent === 'unrelated') {
+                speak(message || 'Ôi, cái này mình không rành lắm đâu! Bạn muốn hỏi gì về truyện không?');
+                return;
+              }
+
+              if (intent === 'story_related_unknown') {
+                speak(message || 'Câu hỏi này thú vị đấy! Mình sẽ hỏi người quản trị và gửi câu trả lời qua email của bạn nhé. Bạn có thể cung cấp email không?');
+                return;
+              }
 
               if (intent === 'unknown' || confidence < 0.7) {
                 speak('Tôi không hiểu lệnh của bạn. Hãy thử lại.');
@@ -855,19 +918,20 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       recog.onend = () => {
         console.log('SpeechRecognition ended');
         setIsListening(false);
-        speak('🔇 Nhận diện giọng nói đã dừng.');
+        // Không gọi speak('Nhận diện giọng nói đã dừng.') để tránh lặp
       };
 
       recognitionRef.current = recog;
 
       if (callbacks && callbacks.onChapterFinished) {
         callbacks.onChapterFinished = () => {
-          isChapterFinishedRef.current = true;
+          setIsChapterFinished(true);
         };
       }
     }
   }, [navigate, isChapterPage, chapters, storyId, chapterData, currentParagraphIndex, callbacks]);
 
+  // Check local commands
   const handleCommand = (transcript) => {
     return (
       transcript.includes('mở tất cả gợi ý') ||
@@ -940,6 +1004,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     );
   };
 
+  // Submit comment
   const submitComment = async () => {
     if (!userIdRef.current) {
       speak('Vui lòng đăng nhập để đăng bình luận');
@@ -970,11 +1035,13 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     }
   };
 
+  // Stop speaking
   const stopSpeaking = () => {
     window.speechSynthesis.cancel();
     localStorage.setItem('is_Speaking', JSON.stringify(false));
   };
 
+  // Search story by name
   const fetchStoryIdByName = async (storyName) => {
     try {
       const response = await fetch(`${API_URL}/searchstory?name=${encodeURIComponent(storyName)}`);
@@ -995,13 +1062,13 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
     }
   };
 
+  // Continue reading
   const handleContinueReadingChapter = () => {
     const user = localStorage.getItem('accountId');
     if (user && storyId) {
       axios
         .get(`${API_URL}/users/${user}/stories/${storyId}/reading-chapter`)
         .then((response) => {
-          console.log('API response for continue reading:', response.data);
           const { chapter, count_row } = response.data;
           if (Array.isArray(chapter) && chapter.length > 0) {
             speak(`Đang tiếp tục chương ${chapter[0].name}`, () =>
@@ -1020,18 +1087,17 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           speak('Lỗi khi lấy dữ liệu chương đang đọc.');
         });
     } else {
-      console.log('Missing userId or storyId:', { userId: userIdRef.current, storyId });
       speak('Không thể tiếp tục vì thiếu thông tin người dùng hoặc truyện.');
     }
   };
 
+  // Read from start
   const handleReadFromStart = () => {
     const user = localStorage.getItem('accountId');
     axios
       .get(`${API_URL}/stories/${storyId}/first?accountId=${user || ''}`)
       .then((response) => {
         const { firstChapter, enableChapter } = response.data;
-        console.log('API response for first chapter:', response.data);
         if (enableChapter && firstChapter && firstChapter._id) {
           speak(`Đang mở chương đầu tiên: ${firstChapter.name}`, () =>
             navigate(`/stories/${storyId}/chapters/${firstChapter._id}`)
@@ -1046,6 +1112,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       });
   };
 
+  // Read latest chapter
   const handleReadLatest = () => {
     const user = localStorage.getItem('accountId');
     axios
@@ -1065,6 +1132,7 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       });
   };
 
+  // Handle chatbot intents
   const handleIntent = async (intent, parameters) => {
     const {
       toggleDropdown,
@@ -1075,7 +1143,6 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
       handleReadFromBeginning,
       scrollToComment,
       setCommentText,
-      handleCommentSubmit,
       setComments,
     } = callbacks || {};
 
@@ -1389,7 +1456,8 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           const confirmationTranscript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
           if (confirmationTranscript.includes('xác nhận')) {
             localStorage.removeItem('username');
-            localStorage.removeItem('userID');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('accountId');
             localStorage.removeItem('vipExpiredNotificationShown');
             navigate('/login');
           }
@@ -1525,105 +1593,18 @@ const useVoiceControl = ({ chapters, storyId, chapterData, currentParagraphIndex
           speak('Có lỗi xảy ra khi đăng bình luận');
         }
         break;
-      case 'rate_story':
-        if (parameters.rating) {
-          const rating = parameters.rating;
-          if (rating >= 1 && rating <= 5) {
-            if (!userIdRef.current) {
-              speak('Vui lòng đăng nhập để đánh giá truyện.');
-              return;
-            }
-            try {
-              await axios.post(`${API_URL}/stories/${storyId}/rating`, {
-                user: userIdRef.current,
-                rating,
-              });
-              speak(`Bạn đã đánh giá ${rating} sao. Cảm ơn bạn! Đang làm mới trang.`, () => {
-                window.location.reload();
-              });
-            } catch (error) {
-              speak('Không thể gửi đánh giá. Vui lòng thử lại sau.');
-            }
-          } else {
-            speak('Vui lòng nói một số từ 1 đến 5, ví dụ "đánh giá 4 sao".');
-          }
-        }
-        break;
       default:
-        if (parameters.chapterName && storyId) {
-          try {
-            const response = await axios.get(
-              `${API_URL}/stories/${storyId}/chapters/name/${encodeURIComponent(parameters.chapterName)}`
-            );
-            const chapter = response.data;
-            speak(`Đang mở ${chapter.name}`, () => {
-              navigate(`/stories/${storyId}/chapters/${chapter._id}`);
-            });
-          } catch (error) {
-            speak(`Không tìm thấy chapter có tên ${parameters.chapterName} trong truyện này.`);
-          }
-        } else {
-          speak('Tôi không hiểu lệnh của bạn. Hãy thử lại.');
-        }
+        speak('Lệnh không được hỗ trợ. Vui lòng thử lại.');
     }
   };
 
-  useEffect(() => {
-    console.log('Attaching keydown/keyup listeners');
-    const handleKeyDown = async (event) => {
-      if (event.repeat) return;
-      console.log('KeyDown:', { ctrlKey: event.ctrlKey, isListening, recognitionExists: !!recognitionRef.current });
-      if (event.ctrlKey && recognitionRef.current && !isListening) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          stream.getTracks().forEach(track => track.stop());
-          recognitionRef.current.start();
-          setIsListening(true);
-          speak('🎤 Đang lắng nghe.');
-          console.log('SpeechRecognition started');
-        } catch (error) {
-          console.error('Lỗi khởi động nhận diện:', error);
-          speak('Không thể khởi động nhận diện giọng nói. Vui lòng kiểm tra quyền micro.');
-        }
-      }
-    };
-
-    const handleKeyUp = (event) => {
-      console.log('KeyUp:', { ctrlKey: event.ctrlKey, isListening, recognitionExists: !!recognitionRef.current });
-      if (!event.ctrlKey && recognitionRef.current && isListening) {
-        try {
-          recognitionRef.current.stop();
-          setIsListening(false);
-          speak('🔇 Đã dừng lắng nghe.');
-          console.log('SpeechRecognition stopped');
-        } catch (error) {
-          console.error('Lỗi dừng nhận diện:', error);
-          speak('Không thể dừng nhận diện giọng nói.');
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    const isAppFirstLaunch = !localStorage.getItem('appLaunched');
-    if (isAppFirstLaunch && !isChapterPage) {
-      speak(
-        'Chào mừng bạn đến với trang web đọc truyện! Bạn có thể nói các lệnh như "trang chủ", "thư viện", "tìm truyện", hoặc "gợi ý truyện" để điều hướng.'
-      );
-      localStorage.setItem('appLaunched', 'true');
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      if (recognitionRef.current && isListening) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, [isListening, isChapterPage]);
-
-  return { isListening };
+  return {
+    isListening,
+    setIsListening,
+    recognition: recognitionRef.current,
+    speak,
+    stopSpeaking,
+  };
 };
 
 export default useVoiceControl;

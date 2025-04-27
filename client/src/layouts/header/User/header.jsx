@@ -61,7 +61,7 @@ const Header = ({ onSearch }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("username");
-    localStorage.removeItem("userID"); // Sửa từ accountId thành userID
+    localStorage.removeItem("userId"); // Sửa từ accountId thành userID
     localStorage.removeItem("vipExpiredNotificationShown");
     setUsername("");
     setDropdownOpen(false);
