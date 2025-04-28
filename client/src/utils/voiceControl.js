@@ -3,6 +3,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../env';
 
+// Hàm chuẩn hóa văn bản: loại bỏ dấu, khoảng cách, chuyển thành chữ thường
+const normalizeText = (text) => {
+  // Chuyển thành chữ thường
+  let normalized = text.toLowerCase();
+  // Loại bỏ dấu tiếng Việt
+  normalized = normalized
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd');
+  // Loại bỏ khoảng cách và ký tự đặc biệt
+  normalized = normalized.replace(/\s+/g, '');
+  return normalized;
+};
+
 const useVoiceControl = ({
   chapters,
   storyId,
@@ -34,7 +49,8 @@ const useVoiceControl = ({
   const isAskingForRatingRef = useRef(false);
   const isWaitingForRatingRef = useRef(false);
   const lastSpokenPathRef = useRef(null);
-
+  const usernameRef = useRef('');
+  const passwordRef = useRef('');
   // Hàm speak với debug và kiểm tra
   const speak = (text, callback) => {
     const synth = window.speechSynthesis;
@@ -51,11 +67,6 @@ const useVoiceControl = ({
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.ctrlKey) {
-        console.log('KeyDown:', {
-          ctrlKey: event.ctrlKey,
-          isListening,
-          recognitionExists: !!recognitionRef.current,
-        });
         if (!isListening && recognitionRef.current) {
           try {
             recognitionRef.current.start();
@@ -72,11 +83,6 @@ const useVoiceControl = ({
 
     const handleKeyUp = (event) => {
       if (!event.ctrlKey) {
-        console.log('KeyUp:', {
-          ctrlKey: event.ctrlKey,
-          isListening,
-          recognitionExists: !!recognitionRef.current,
-        });
         if (isListening && recognitionRef.current) {
           recognitionRef.current.stop();
           setIsListening(false);
@@ -244,6 +250,49 @@ const useVoiceControl = ({
                 }
               } else {
                 speak('Vui lòng nói một số từ 1 đến 5, ví dụ "đánh giá 4 sao".');
+              }
+              return;
+            }
+          }
+
+          // Xử lý lệnh đăng nhập trên trang /login
+          if (location.pathname === '/login') {
+            if (transcript.startsWith('nhập tên ')) {
+              const rawUsername = transcript.replace('nhập tên ', '').trim();
+              const username = normalizeText(rawUsername);
+              if (username && callbacks.setUsername) {
+                callbacks.setUsername(username);
+                usernameRef.current = username;
+                speak(`Đã nhập tên đăng nhập: ${username}`);
+              } else {
+                speak('Vui lòng cung cấp tên đăng nhập hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập mật khẩu ')) {
+              const rawPassword = transcript.replace('nhập mật khẩu ', '').trim();
+              const password = normalizeText(rawPassword);
+              if (password && callbacks.setPassword) {
+                callbacks.setPassword(password);
+                passwordRef.current = password;
+                speak('Đã nhập mật khẩu.');
+              } else {
+                speak('Vui lòng cung cấp mật khẩu hợp lệ.');
+              }
+              return;
+            } else if (transcript.includes('đăng nhập')) {
+              if (!usernameRef.current || !passwordRef.current) {
+                speak('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu trước.');
+                return;
+              }
+              if (callbacks.submitLogin) {
+                speak('Đang thực hiện đăng nhập.');
+                // Gửi dữ liệu chuẩn hóa từ usernameRef và passwordRef
+                callbacks.submitLogin({
+                  username: usernameRef.current,
+                  password: passwordRef.current,
+                });
+              } else {
+                speak('Không thể đăng nhập. Vui lòng thử lại.');
               }
               return;
             }
