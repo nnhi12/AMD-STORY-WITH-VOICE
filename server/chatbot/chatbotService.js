@@ -35,6 +35,8 @@ const commandTemplates = [
   { text: 'đăng bình luận', intent: 'submit_comment' },
   { text: 'nhập bình luận', intent: 'input_comment' },
   { text: 'đánh giá sao', intent: 'rate_story' },
+  { text: 'mở trang thanh toán', intent: 'navigate_payment' }, // New command
+  { text: 'mở thông tin người dùng', intent: 'navigate_userinfo' }, // New command
   // Thêm mẫu câu hỏi mở
   { text: 'tác giả viết truyện mới', intent: 'story_related_unknown' },
   { text: 'truyện có phần tiếp theo', intent: 'story_related_unknown' },
@@ -46,7 +48,8 @@ const commandTemplates = [
 const storyRelatedKeywords = [
   'truyện', 'chương', 'thể loại', 'đọc', 'bình luận', 'đánh giá', 'tìm',
   'gợi ý', 'theo dõi', 'thư viện', 'trang chủ', 'hot', 'tuổi', 'giới tính',
-  'nghe', 'dừng', 'tiếp tục', 'xóa', 'đăng xuất', 'đăng nhập', 'tác giả', 'chuyện'
+  'nghe', 'dừng', 'tiếp tục', 'xóa', 'đăng xuất', 'đăng nhập', 'tác giả', 
+  'chuyện', 'thanh toán', 'thông tin người dùng' // Added new keywords
 ];
 
 // Tải mô hình Universal Sentence Encoder

@@ -39,7 +39,6 @@ const useVoiceControl = ({
   const [isListening, setIsListening] = useState(false);
   const [isChapterFinished, setIsChapterFinished] = useState(false);
   const isChapterPage = location.pathname.includes('/chapters');
-  const [categories, setCategories] = useState([]);
   const userIdRef = useRef(userId);
   const nextIdRef = useRef(nextId);
   const previousIdRef = useRef(previousId);
@@ -51,6 +50,38 @@ const useVoiceControl = ({
   const lastSpokenPathRef = useRef(null);
   const usernameRef = useRef('');
   const passwordRef = useRef('');
+  const emailRef = useRef('');
+  const ageRef = useRef('');
+  const genderRef = useRef('other');
+  const preferredCategoriesRef = useRef([]);
+
+
+  const getCategories = async () => {
+    let categories = [];
+    try {
+      // Kiểm tra localStorage
+      const storedCategories = localStorage.getItem('categories');
+      if (storedCategories) {
+        categories = JSON.parse(storedCategories);
+        console.log('Đã lấy categories từ localStorage:', categories);
+        if (Array.isArray(categories) && categories.length > 0) {
+          return categories;
+        }
+      }
+      // Nếu localStorage rỗng, gọi API
+      console.log('localStorage rỗng, gọi API /categories');
+      const response = await axios.get(`${API_URL}/categories`);
+      categories = response.data;
+      // Lưu vào localStorage
+      localStorage.setItem('categories', JSON.stringify(categories));
+      console.log('Đã lưu categories từ API vào localStorage:', categories);
+      return categories;
+    } catch (error) {
+      console.error('Lỗi khi lấy categories:', error);
+      return [];
+    }
+  };
+
   // Hàm speak với debug và kiểm tra
   const speak = (text, callback) => {
     const synth = window.speechSynthesis;
@@ -118,6 +149,7 @@ const useVoiceControl = ({
     '/for-kids': 'truyện dành cho trẻ em',
     '/by-age-input': 'nhập độ tuổi',
     '/by-gender': 'truyện theo giới tính',
+    '/searchresult': 'tìm kiếm truyện',
   };
 
   // Announce page changes
@@ -156,19 +188,7 @@ const useVoiceControl = ({
     currentParagraphIndexRef.current = currentParagraphIndex;
   }, [nextId, previousId, userId, commentText, chapterId, currentParagraphIndex]);
 
-  // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/categories`);
-        setCategories(response.data);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        speak('Không thể tải danh sách thể loại.');
-      }
-    };
-    fetchCategories();
-  }, []);
+
 
   // Handle chapter completion
   useEffect(() => {
@@ -293,6 +313,115 @@ const useVoiceControl = ({
                 });
               } else {
                 speak('Không thể đăng nhập. Vui lòng thử lại.');
+              }
+              return;
+            }
+          }
+
+          if (location.pathname === '/register') {
+            if (transcript.startsWith('nhập tên đăng nhập ')) {
+              const rawUsername = transcript.replace('nhập tên đăng nhập ', '').trim();
+              const username = normalizeText(rawUsername);
+              if (username && callbacks.setUsername) {
+                callbacks.setUsername(username);
+                usernameRef.current = username;
+                speak(`Đã nhập tên đăng nhập: ${username}`);
+              } else {
+                speak('Vui lòng cung cấp tên đăng nhập hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập mật khẩu ')) {
+              const rawPassword = transcript.replace('nhập mật khẩu ', '').trim();
+              const password = normalizeText(rawPassword);
+              if (password && callbacks.setPassword) {
+                callbacks.setPassword(password);
+                passwordRef.current = password;
+                speak('Đã nhập mật khẩu.');
+              } else {
+                speak('Vui lòng cung cấp mật khẩu hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập email ')) {
+              const email = transcript.replace('nhập email ', '').trim();
+              if (email && callbacks.setEmail) {
+                callbacks.setEmail(email);
+                emailRef.current = email;
+                speak(`Đã nhập email: ${email}`);
+              } else {
+                speak('Vui lòng cung cấp email hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập tuổi ')) {
+              const age = transcript.replace('nhập tuổi ', '').trim();
+              if (!isNaN(age) && age >= 0 && callbacks.setAge) {
+                callbacks.setAge(age);
+                ageRef.current = age;
+                speak(`Đã nhập tuổi: ${age}`);
+              } else {
+                speak('Vui lòng cung cấp tuổi hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('chọn giới tính ')) {
+              const genderInput = transcript.replace('chọn giới tính ', '').trim();
+              let gender = 'other';
+              if (genderInput.includes('nam')) gender = 'male';
+              else if (genderInput.includes('nữ') || genderInput.includes('nu')) gender = 'female';
+              if (callbacks.setGender) {
+                callbacks.setGender(gender);
+                genderRef.current = gender;
+                speak(`Đã chọn giới tính: ${gender === 'male' ? 'nam' : gender === 'female' ? 'nữ' : 'khác'}`);
+              } else {
+                speak('Không thể chọn giới tính. Vui lòng thử lại.');
+              }
+              return;
+            } else if (transcript.startsWith('chọn thể loại ')) {
+              const categoryName = transcript.replace('chọn thể loại ', '').trim().toLowerCase();
+              // Lấy categories từ localStorage hoặc API
+              const categories = await getCategories();
+              console.log('categories hiện tại:', categories);
+              if (!categories || categories.length === 0) {
+                speak('Danh sách thể loại không khả dụng. Vui lòng thử lại sau.');
+                console.log('categories rỗng:', categories);
+                return;
+              }
+              const normalizedCategoryName = normalizeText(categoryName);
+              const category = categories.find((cat) => normalizeText(cat.name.toLowerCase()) === normalizedCategoryName);
+              console.log('Tìm thể loại:', normalizedCategoryName, 'Danh sách categories:', categories.map(cat => cat.name));
+              if (category && callbacks.addCategory) {
+                callbacks.addCategory(category._id);
+                preferredCategoriesRef.current = [
+                  ...new Set([...preferredCategoriesRef.current, category._id]),
+                ];
+                speak(`Đã chọn thể loại: ${category.name}`);
+                console.log('preferredCategoriesRef sau khi chọn:', preferredCategoriesRef.current);
+              } else {
+                speak(`Thể loại ${categoryName} không hợp lệ hoặc không tìm thấy. Các thể loại khả dụng: ${categories.map(cat => cat.name).join(', ') || 'không có'}.`);
+                console.log('Không tìm thấy thể loại:', normalizedCategoryName, 'Thể loại khả dụng:', categories.map(cat => cat.name));
+              }
+              return;
+            } else if (transcript.includes('đăng ký')) {
+              if (
+                !usernameRef.current ||
+                !passwordRef.current ||
+                !emailRef.current ||
+                !ageRef.current
+              ) {
+                speak('Vui lòng nhập đầy đủ tên đăng nhập, mật khẩu, email và tuổi trước.');
+                return;
+              }
+              if (callbacks.submitRegister) {
+                speak('Đang thực hiện đăng ký.');
+                callbacks.submitRegister({
+                  username: usernameRef.current,
+                  password: passwordRef.current,
+                  confirmPassword: passwordRef.current,
+                  email: emailRef.current,
+                  age: ageRef.current,
+                  gender: genderRef.current,
+                  preferredCategories: preferredCategoriesRef.current,
+                });
+              } else {
+                speak('Không thể đăng ký. Vui lòng thử lại.');
               }
               return;
             }
@@ -635,6 +764,12 @@ const useVoiceControl = ({
             return;
           } else if (transcript.includes('danh sách theo dõi')) {
             speak('Đang chuyển đến danh sách truyện bạn theo dõi.', () => navigate('/favpage'));
+            return;
+          } else if (transcript.includes('mở trang thanh toán')) {
+            speak('Đang chuyển đến trang thanh toán.', () => navigate('/payment'));
+            return;
+          } else if (transcript.includes('mở thông tin người dùng')) {
+            speak('Đang chuyển đến trang thông tin người dùng.', () => navigate('/userinfo'));
             return;
           } else if (transcript.startsWith('tìm ') || transcript.startsWith('mở ')) {
             const storyName = transcript.substring(4).trim();
