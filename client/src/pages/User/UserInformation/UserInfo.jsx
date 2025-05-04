@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './UserInfo.css';
 import { API_URL } from '../../../env.js';
+import useVoiceControl from '../../../utils/voiceControl.js';
 
 function UserInfo() {
   const [userInfo, setUserInfo] = useState({
@@ -13,17 +14,27 @@ function UserInfo() {
     image: null,
     preferred_categories: [],
   });
-  const [categories, setCategories] = useState([]); // Danh sách tất cả thể loại
-  const [accountStatus, setAccountStatus] = useState(null); // Trạng thái tài khoản và đăng ký
+  const [categories, setCategories] = useState([]);
+  const [accountStatus, setAccountStatus] = useState(null);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingUserInfo, setLoadingUserInfo] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [file, setFile] = useState(null);
+  const userInfoRef = useRef(userInfo);
+  const isEditingRef = useRef(isEditing);
 
-  // Lấy thông tin người dùng, thể loại, và trạng thái tài khoản
+  const accountId = localStorage.getItem('accountId');
+
+  useEffect(() => {
+    userInfoRef.current = userInfo;
+    isEditingRef.current = isEditing;
+    console.log('Cập nhật userInfoRef:', userInfoRef.current);
+    console.log('Cập nhật isEditingRef:', isEditingRef.current);
+  }, [userInfo, isEditing]);
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const accountId = localStorage.getItem('accountId');
         const response = await axios.get(`${API_URL}/userinfo/${accountId}`);
         setUserInfo({
           ...response.data,
@@ -31,6 +42,8 @@ function UserInfo() {
         });
       } catch (error) {
         console.error('Lỗi khi lấy thông tin người dùng:', error);
+      } finally {
+        setLoadingUserInfo(false);
       }
     };
 
@@ -47,7 +60,6 @@ function UserInfo() {
 
     const fetchAccountStatus = async () => {
       try {
-        const accountId = localStorage.getItem('accountId');
         const response = await axios.get(`${API_URL}/account-status?accountId=${accountId}`);
         setAccountStatus(response.data);
       } catch (error) {
@@ -58,34 +70,79 @@ function UserInfo() {
     fetchUserInfo();
     fetchCategories();
     fetchAccountStatus();
-  }, []);
+  }, [accountId]);
 
   const handleEdit = () => {
     setIsEditing(true);
+    console.log('Chuyển sang chế độ chỉnh sửa, isEditing:', true);
   };
 
   const handleSave = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     try {
-      const accountId = localStorage.getItem('accountId');
+      console.log('Trạng thái isEditingRef:', isEditingRef.current);
+      console.log('Trạng thái userInfoRef trước khi gửi:', userInfoRef.current);
+
+      // Kiểm tra dữ liệu trước khi gửi
+      if (
+        !userInfoRef.current.fullname &&
+        !userInfoRef.current.email &&
+        !userInfoRef.current.age &&
+        !userInfoRef.current.gender &&
+        !userInfoRef.current.preferred_categories.length &&
+        !file
+      ) {
+        console.warn('Không có thông tin nào để lưu.');
+        setIsEditing(false);
+        return;
+      }
+
+      // Đảm bảo preferred_categories là mảng các chuỗi
+      const preferredCategories = Array.isArray(userInfoRef.current.preferred_categories)
+        ? userInfoRef.current.preferred_categories.filter((id) => typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/))
+        : [];
+
       const formData = new FormData();
-      formData.append('fullname', userInfo.fullname);
-      formData.append('email', userInfo.email);
-      formData.append('age', userInfo.age);
-      formData.append('gender', userInfo.gender);
-      formData.append('preferred_categories', JSON.stringify(userInfo.preferred_categories));
+      formData.append('fullname', userInfoRef.current.fullname || '');
+      formData.append('email', userInfoRef.current.email || '');
+      formData.append('age', userInfoRef.current.age || '');
+      formData.append('gender', userInfoRef.current.gender || 'other');
+      formData.append('preferred_categories', JSON.stringify(preferredCategories));
       if (file) {
         formData.append('image', file);
       }
 
-      await axios.put(`${API_URL}/userinfo/${accountId}`, formData, {
+      console.log('Dữ liệu FormData gửi đi:', Object.fromEntries(formData));
+
+      const response = await axios.put(`${API_URL}/userinfo/${accountId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+
+      console.log('Phản hồi từ server:', response.data);
+
       setIsEditing(false);
       setFile(null);
+      // Chuyển image thành chuỗi base64 nếu là Buffer
+      const updatedUserInfo = {
+        ...response.data.data,
+        preferred_categories: response.data.data.preferred_categories || [],
+        image: response.data.data.image
+          ? typeof response.data.data.image === 'string'
+            ? response.data.data.image
+            : `data:image/jpeg;base64,${Buffer.from(response.data.data.image).toString('base64')}`
+          : null,
+      };
+      setUserInfo(updatedUserInfo);
+      window.location.reload(); // Tải lại trang thay vì alert
     } catch (error) {
-      console.error('Lỗi khi cập nhật thông tin người dùng:', error);
+      console.error('Lỗi khi cập nhật thông tin người dùng:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
     }
   };
 
@@ -95,7 +152,7 @@ function UserInfo() {
       setFile(selectedFile);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUserInfo({ ...userInfo, image: reader.result });
+        setUserInfo((prev) => ({ ...prev, image: reader.result }));
       };
       reader.readAsDataURL(selectedFile);
     }
@@ -103,15 +160,53 @@ function UserInfo() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserInfo({ ...userInfo, [name]: value });
+    setUserInfo((prevUserInfo) => {
+      const updatedUserInfo = { ...prevUserInfo, [name]: value };
+      console.log('Updating:', name, value, 'Updated userInfo:', updatedUserInfo);
+      return updatedUserInfo;
+    });
   };
 
   const handleCategoryChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map((option) => option.value);
-    setUserInfo({ ...userInfo, preferred_categories: selectedOptions });
+    let selectedOptions;
+    if (e.target.value) {
+      selectedOptions = Array.isArray(e.target.value) ? e.target.value : [e.target.value];
+    } else {
+      selectedOptions = Array.from(e.target.selectedOptions).map((option) => option.value);
+    }
+    setUserInfo((prevUserInfo) => {
+      const updatedUserInfo = { ...prevUserInfo, preferred_categories: selectedOptions };
+      console.log('Cập nhật preferred_categories:', selectedOptions);
+      return updatedUserInfo;
+    });
   };
 
-  // Hàm lấy tên thể loại từ ID
+  const voiceControlCallbacks = {
+    setIsEditing,
+    handleChange,
+    handleCategoryChange,
+    handleSave,
+    userInfo: userInfoRef,
+    isEditing: isEditingRef,
+  };
+
+  useVoiceControl({
+    callbacks: voiceControlCallbacks,
+    userId: accountId,
+    chapters: [],
+    storyId: null,
+    chapterData: null,
+    currentParagraphIndex: 0,
+    nextId: null,
+    previousId: null,
+    commentText: '',
+    chapterId: null,
+    setAge: (age) => setUserInfo((prev) => ({ ...prev, age })),
+    fetchStories: () => {},
+    setStories: () => {},
+    loadingUserInfo,
+  });
+
   const getCategoryNames = (categoryIds) => {
     if (!categoryIds || categoryIds.length === 0) return 'Chưa chọn thể loại';
     return categoryIds
@@ -121,6 +216,10 @@ function UserInfo() {
       })
       .join(', ');
   };
+
+  if (loadingUserInfo) {
+    return <div>Đang tải thông tin người dùng...</div>;
+  }
 
   return (
     <div className="profile-container">
@@ -134,7 +233,7 @@ function UserInfo() {
               disabled={!isEditing}
               style={{ marginTop: '10px' }}
             />
-            {userInfo.image && (
+            {userInfo.image && typeof userInfo.image === 'string' && (
               <img
                 src={
                   userInfo.image.startsWith('data:image/')

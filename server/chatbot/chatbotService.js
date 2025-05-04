@@ -37,6 +37,14 @@ const commandTemplates = [
   { text: 'đánh giá sao', intent: 'rate_story' },
   { text: 'mở trang thanh toán', intent: 'navigate_payment' }, // New command
   { text: 'mở thông tin người dùng', intent: 'navigate_userinfo' }, // New command
+  //userinfo
+  { text: 'chỉnh sửa thông tin', intent: 'edit_userinfo' },
+  { text: 'nhập họ tên', intent: 'input_fullname' },
+  { text: 'nhập email', intent: 'input_email' },
+  { text: 'nhập tuổi', intent: 'input_age' },
+  { text: 'chọn giới tính', intent: 'select_gender' },
+  { text: 'chọn thể loại yêu thích', intent: 'select_preferred_categories' },
+  { text: 'lưu thông tin', intent: 'save_userinfo' },
   // Thêm mẫu câu hỏi mở
   { text: 'tác giả viết truyện mới', intent: 'story_related_unknown' },
   { text: 'truyện có phần tiếp theo', intent: 'story_related_unknown' },
@@ -192,6 +200,27 @@ function extractParameters(transcript, commandText) {
   // Trích xuất tên truyện để xóa
   if (commandText.includes('xóa truyện') && transcriptLower.startsWith('xóa truyện ')) {
     params.storyName = transcriptLower.replace('xóa truyện ', '').trim();
+  }
+
+  // Trích xuất họ tên
+  if (commandText.includes('nhập họ tên') && transcriptLower.startsWith('nhập họ tên ')) {
+    params.fullname = transcript.slice(12).trim();
+  }
+  // Trích xuất email
+  if (commandText.includes('nhập email') && transcriptLower.startsWith('nhập email ')) {
+    params.email = transcript.slice(11).trim();
+  }
+  // Trích xuất tuổi
+  if (commandText.includes('nhập tuổi') && transcriptLower.startsWith('nhập tuổi ')) {
+    params.age = transcriptLower.replace('nhập tuổi ', '').trim();
+  }
+  // Trích xuất giới tính
+  if (commandText.includes('chọn giới tính') && transcriptLower.startsWith('chọn giới tính ')) {
+    params.gender = transcriptLower.replace('chọn giới tính ', '').trim();
+  }
+  // Trích xuất thể loại yêu thích
+  if (commandText.includes('chọn thể loại yêu thích') && transcriptLower.startsWith('chọn thể loại yêu thích ')) {
+    params.preferred_categories = transcriptLower.replace('chọn thể loại yêu thích ', '').trim();
   }
 
   return params;

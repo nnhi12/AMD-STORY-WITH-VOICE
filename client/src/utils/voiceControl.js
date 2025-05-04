@@ -18,6 +18,14 @@ const normalizeText = (text) => {
   return normalized;
 };
 
+const capitalizeName = (name) => {
+  return name
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const useVoiceControl = ({
   chapters,
   storyId,
@@ -32,6 +40,7 @@ const useVoiceControl = ({
   setAge,
   fetchStories,
   setStories,
+  loadingUserInfo,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +63,8 @@ const useVoiceControl = ({
   const ageRef = useRef('');
   const genderRef = useRef('other');
   const preferredCategoriesRef = useRef([]);
-
+  const fullnameRef = useRef('');
+  const isEditingRef = useRef(false);
 
   const getCategories = async () => {
     let categories = [];
@@ -270,6 +280,117 @@ const useVoiceControl = ({
                 }
               } else {
                 speak('Vui lòng nói một số từ 1 đến 5, ví dụ "đánh giá 4 sao".');
+              }
+              return;
+            }
+          }
+
+          //userinfo
+          if (location.pathname === '/userinfo') {
+            if (transcript.includes('chỉnh sửa thông tin')) {
+              if (callbacks && callbacks.setIsEditing) {
+                callbacks.setIsEditing(true);
+                isEditingRef.current = true;
+                console.log('Chuyển sang chế độ chỉnh sửa, isEditing:', true);
+                speak('Đã chuyển sang chế độ chỉnh sửa.');
+              } else {
+                speak('Không thể chuyển sang chế độ chỉnh sửa. Vui lòng thử lại.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập họ tên ')) {
+              let fullname = transcript.replace('nhập họ tên ', '').trim();
+              if (fullname && callbacks && callbacks.handleChange) {
+                callbacks.setIsEditing(true);
+                isEditingRef.current = true;
+                console.log('Tự động chuyển sang chế độ chỉnh sửa khi nhập họ tên, isEditing:', true);
+                fullname = capitalizeName(fullname);
+                callbacks.handleChange({ target: { name: 'fullname', value: fullname } });
+                fullnameRef.current = fullname;
+                speak(`Đã nhập họ tên: ${fullname}`);
+              } else {
+                speak('Vui lòng cung cấp họ tên hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập email ')) {
+              let email = transcript.replace('nhập email ', '').trim();
+              if (email && callbacks && callbacks.handleChange) {
+                callbacks.setIsEditing(true);
+                isEditingRef.current = true;
+                console.log('Tự động chuyển sang chế độ chỉnh sửa khi nhập email, isEditing:', true);
+                email = normalizeText(email).replace(/\s/g, '');
+                callbacks.handleChange({ target: { name: 'email', value: email } });
+                emailRef.current = email;
+                console.log('Cập nhật email:', email);
+                speak(`Đã nhập email: ${email}`);
+              } else {
+                speak('Vui lòng cung cấp email hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập tuổi ')) {
+              const age = transcript.replace('nhập tuổi ', '').trim();
+              if (!isNaN(age) && age >= 0 && callbacks && callbacks.handleChange) {
+                callbacks.setIsEditing(true);
+                isEditingRef.current = true;
+                console.log('Tự động chuyển sang chế độ chỉnh sửa khi nhập tuổi, isEditing:', true);
+                callbacks.handleChange({ target: { name: 'age', value: age } });
+                ageRef.current = age;
+                speak(`Đã nhập tuổi: ${age}`);
+              } else {
+                speak('Vui lòng cung cấp tuổi hợp lệ.');
+              }
+              return;
+            } else if (transcript.startsWith('chọn giới tính ')) {
+              const genderInput = transcript.replace('chọn giới tính ', '').trim();
+              let gender = 'other';
+              if (genderInput.includes('nam')) gender = 'male';
+              else if (genderInput.includes('nữ') || genderInput.includes('nu')) gender = 'female';
+              if (callbacks && callbacks.handleChange) {
+                callbacks.setIsEditing(true);
+                isEditingRef.current = true;
+                console.log('Tự động chuyển sang chế độ chỉnh sửa khi chọn giới tính, isEditing:', true);
+                callbacks.handleChange({ target: { name: 'gender', value: gender } });
+                genderRef.current = gender;
+                speak(`Đã chọn giới tính: ${gender === 'male' ? 'nam' : gender === 'female' ? 'nữ' : 'khác'}`);
+              } else {
+                speak('Không thể chọn giới tính. Vui lòng thử lại.');
+              }
+              return;
+            } else if (transcript.startsWith('chọn thể loại yêu thích ')) {
+              const categoryName = transcript.replace('chọn thể loại yêu thích ', '').trim().toLowerCase();
+              const categories = await getCategories();
+              if (!categories || categories.length === 0) {
+                speak('Danh sách thể loại không khả dụng. Vui lòng thử lại sau.');
+                return;
+              }
+              const normalizedCategoryName = normalizeText(categoryName);
+              const category = categories.find((cat) => normalizeText(cat.name.toLowerCase()) === normalizedCategoryName);
+              if (category && callbacks && callbacks.handleCategoryChange) {
+                callbacks.setIsEditing(true);
+                isEditingRef.current = true;
+                console.log('Tự động chuyển sang chế độ chỉnh sửa khi chọn thể loại, isEditing:', true);
+                const updatedCategories = [...new Set([...preferredCategoriesRef.current, category._id])].filter(
+                  (id) => typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/)
+                );
+                callbacks.handleCategoryChange({ target: { value: updatedCategories } });
+                preferredCategoriesRef.current = updatedCategories;
+                console.log('Cập nhật preferred_categories:', updatedCategories);
+                speak(`Đã chọn thể loại yêu thích: ${category.name}`);
+              } else {
+                speak(`Thể loại ${categoryName} không hợp lệ hoặc không tìm thấy. Các thể loại khả dụng: ${categories.map(cat => cat.name).join(', ')}.`);
+              }
+              return;
+            } else if (transcript.includes('lưu thông tin')) {
+              if (callbacks && callbacks.handleSave) {
+                console.log('Xử lý lệnh lưu thông tin, isEditingRef:', isEditingRef.current);
+                console.log('userInfo hiện tại:', callbacks.userInfo.current);
+                if (isEditingRef.current) {
+                  speak('Đang lưu thông tin người dùng.');
+                  callbacks.handleSave();
+                } else {
+                  speak('Vui lòng chuyển sang chế độ chỉnh sửa trước khi lưu.');
+                }
+              } else {
+                speak('Không thể lưu thông tin. Vui lòng thử lại.');
               }
               return;
             }
