@@ -45,6 +45,7 @@ const commandTemplates = [
   { text: 'chọn giới tính', intent: 'select_gender' },
   { text: 'chọn thể loại yêu thích', intent: 'select_preferred_categories' },
   { text: 'lưu thông tin', intent: 'save_userinfo' },
+  
   // Thêm mẫu câu hỏi mở
   { text: 'tác giả viết truyện mới', intent: 'story_related_unknown' },
   { text: 'truyện có phần tiếp theo', intent: 'story_related_unknown' },
