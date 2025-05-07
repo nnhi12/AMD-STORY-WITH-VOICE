@@ -65,6 +65,7 @@ const useVoiceControl = ({
   const preferredCategoriesRef = useRef([]);
   const fullnameRef = useRef('');
   const isEditingRef = useRef(false);
+  
 
   const getCategories = async () => {
     let categories = [];
@@ -1066,13 +1067,11 @@ const useVoiceControl = ({
               fetchStoryInfo();
               return;
             }
-
             if (transcript.includes('dừng lại')) {
               stopSpeaking();
               speak('Đã dừng đọc thông tin.');
               return;
             }
-
             if (transcript.includes('đọc từ đầu')) {
               speak('Đang mở chương đầu tiên...', handleReadFromStart);
               return;
@@ -1081,6 +1080,36 @@ const useVoiceControl = ({
               return;
             } else if (transcript.includes('đọc tiếp')) {
               speak('Đang tiếp tục đọc...', handleContinueReadingChapter);
+              return;
+            } else if (transcript.includes('tôi muốn đánh giá truyện được không')) {
+              const user = localStorage.getItem('userId');
+              if (!user) {
+                speak('Vui lòng đăng nhập để đánh giá truyện.');
+                return;
+              }
+              if (!storyId) {
+                speak('Không tìm thấy truyện để đánh giá.');
+                return;
+              }
+              try {
+                const endpoint = `${API_URL}/checkstory/${user}/stories/${storyId}/reading-chapter`;
+                console.log('Requesting endpoint:', endpoint);
+                const response = await axios.get(endpoint);
+                const readingData = response.data;
+                console.log('Reading data response:', readingData);
+                if (readingData.chapter && readingData.chapter.length > 0) {
+                  speak('Bạn đã đọc truyện này. Bạn có thể đánh giá.');
+                } else {
+                  speak('Bạn chưa đọc truyện này. Hãy thử đọc trước rồi đánh giá sau.');
+                }
+              } catch (error) {
+                console.error('Lỗi khi kiểm tra trạng thái đọc:', error);
+                if (error.response && error.response.status === 404) {
+                  speak('Bạn chưa đọc truyện này. Hãy thử đọc trước rồi đánh giá sau.');
+                } else {
+                  speak('Có lỗi xảy ra khi kiểm tra trạng thái đọc. Vui lòng thử lại.');
+                }
+              }
               return;
             } else {
               const normalizeChapterName = (text) => {
@@ -1305,7 +1334,8 @@ const useVoiceControl = ({
       transcript.startsWith('nhập tên đăng nhập ') ||
       transcript.startsWith('nhập mật khẩu ') ||
       transcript.includes('đăng nhập') ||
-      transcript.startsWith('nhập tuổi ')
+      transcript.startsWith('nhập tuổi ') ||
+      transcript.includes('tôi muốn đánh giá truyện được không')
     );
   };
 
@@ -1351,19 +1381,29 @@ const useVoiceControl = ({
     try {
       const response = await fetch(`${API_URL}/searchstory?name=${encodeURIComponent(storyName)}`);
       if (!response.ok) {
-        speak(`Không tìm thấy truyện ${storyName}`);
-        navigate('/searchresult', { state: { searchResults: [] } });
+        console.log('API response not OK:', response.status);
+        await speak(`Không tìm thấy truyện ${storyName}`);
+        setTimeout(() => navigate('/searchresult', { state: { searchResults: [] } }), 2000);
         return;
       }
       const data = await response.json();
+      console.log('API response data:', data);
+      if (data.length === 0) {
+        await speak(`Không tìm thấy truyện ${storyName}`);
+        setTimeout(() => navigate('/searchresult', { state: { searchResults: [] } }), 2000);
+        return;
+      }
       if (data.length === 1) {
-        speak(`Đang chuyển đến truyện ${data[0].name}`, () => navigate(`/storyinfo/${data[0]._id}`));
+        await speak(`Đang chuyển đến truyện ${data[0].name}`);
+        setTimeout(() => navigate(`/storyinfo/${data[0]._id}`), 3000);
       } else {
-        speak(`Đang hiển thị danh sách tìm kiếm.`, () => navigate('/searchresult', { state: { searchResults: data } }));
+        await speak(`Đang hiển thị danh sách tìm kiếm.`);
+        setTimeout(() => navigate('/searchresult', { state: { searchResults: data } }), 2000);
       }
     } catch (error) {
-      speak('Lỗi khi tìm truyện, vui lòng thử lại sau.');
-      navigate('/searchresult', { state: { searchResults: [] } });
+      console.error('Lỗi khi tìm truyện:', error);
+      await speak('Lỗi khi tìm truyện, vui lòng thử lại sau.');
+      setTimeout(() => navigate('/searchresult', { state: { searchResults: [] } }), 2000);
     }
   };
 
@@ -1396,9 +1436,47 @@ const useVoiceControl = ({
     }
   };
 
-  // Read from start
-  const handleReadFromStart = () => {
+  const addToReadingList = async () => {
     const user = localStorage.getItem('accountId');
+    if (!user) {
+      speak('Vui lòng đăng nhập để thêm truyện vào danh sách đọc.');
+      return false;
+    }
+    if (!storyId) {
+      console.error('storyId is undefined or invalid:', storyId);
+      speak('Không thể thêm truyện do thiếu thông tin truyện.');
+      return false;
+    }
+    console.log('Adding to reading list:', { accountId: user, storyId });
+    try {
+      const response = await axios.post(`${API_URL}/add-to-reading-list`, {
+        accountId: user,
+        storyId: storyId,
+      });
+      console.log('Successfully added to reading list:', response.data);
+      speak('Đã thêm truyện vào danh sách đọc thành công.');
+      return true;
+    } catch (error) {
+      console.error('Error adding story to reading list:', error.response?.data || error.message);
+      if (error.response && error.response.status === 400) {
+        if (error.response.data.message === 'Story already in reading list.') {
+          console.log('Story already in reading list, proceeding.');
+          return true;
+        }
+        speak(`Lỗi: ${error.response.data.message || 'Dữ liệu không hợp lệ.'}`);
+      } else {
+        speak('Không thể thêm truyện vào danh sách đọc do lỗi hệ thống. Vui lòng thử lại sau.');
+      }
+      return false;
+    }
+  };
+
+  // Read from start
+  const handleReadFromStart = async ()  => {
+    const user = localStorage.getItem('accountId');
+    if (user) {
+      await addToReadingList();
+    }
     axios
       .get(`${API_URL}/stories/${storyId}/first?accountId=${user || ''}`)
       .then((response) => {
@@ -1417,9 +1495,13 @@ const useVoiceControl = ({
       });
   };
 
+  
   // Read latest chapter
-  const handleReadLatest = () => {
+  const handleReadLatest = async ()  => {
     const user = localStorage.getItem('accountId');
+    if (user) {
+      await addToReadingList();
+    }
     axios
       .get(`${API_URL}/stories/${storyId}/latest?accountId=${user || ''}`)
       .then((response) => {

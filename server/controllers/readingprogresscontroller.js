@@ -57,5 +57,19 @@ router.put('/users/:accountId/stories/:storyId/reading-chapter', async (req, res
     }
 });
 
+//check xem nguoi dung da doc truyen chua
+router.get('/checkstory/:userId/stories/:storyId/reading-chapter', async (req, res) => {
+    try {
+      const { userId, storyId } = req.params;
+      const readingData = await readingchapterModel.find({
+        user_id: userId,
+        story_id: storyId,
+      }).populate('chapter_id');
+      res.json({ chapter: readingData });
+    } catch (error) {
+      console.error('Error fetching reading chapter:', error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
 
 module.exports = router;
