@@ -15,7 +15,7 @@ async function hybridRecommend(userId, topN = 5, trainStories = null, trainRatin
         if (!user) return [];
 
         const numInteractions = user.story_reading.length + (await Rating.countDocuments({ user_id: userId }));
-        const alpha = numInteractions < 10 ? 0.6 : 0.4;
+        const alpha = numInteractions < 4 ? 0.3 : 0.1;
 
         const cbResults = await contentBasedRecommend(userId, topN * 2, trainStories) || [];
         const cfResults = await collaborativeRecommend(userId, topN * 2, 5, trainRatings) || [];
