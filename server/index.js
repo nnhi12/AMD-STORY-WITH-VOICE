@@ -16,6 +16,7 @@ const vipRouter = require('./controllers/vipcontroller.js');
 const storyVoiceRouter = require('./controllers/voicecontroller.js');
 const recommendationRoutes = require('./routes/recommendation');
 const statisticalRoutes = require('./routes/statistical');
+const chatbotRouter = require('./chatbot/chatbotService.js');
 const app = express();
 
 app.use(express.json());
@@ -57,6 +58,8 @@ app.get('/',storyVoiceRouter);
 app.use('/recommend', recommendationRoutes);
 
 app.use('/statistical', statisticalRoutes);
+
+app.use('/chatbot', chatbotRouter);
 
 app.listen(3001, '0.0.0.0', () => {
     console.log('Success!');

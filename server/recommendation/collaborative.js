@@ -2,64 +2,26 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Story = require('../models/Story');
 const Rating = require('../models/Rating');
+const { getCachedRecommendations, saveRecommendationsToCache } = require('./cache');
 
-async function getUserStoryMatrix() {
+async function getUserStoryMatrix(trainRatings = []) {
     try {
-        console.log('Đang lấy đánh giá cho ma trận người dùng-truyện');
-        const ratings = await Rating.find().populate('user_id story_id');
-        console.log('Đánh giá gốc:', ratings.map(r => ({
-            _id: r._id,
-            user_id: r.user_id?._id.toString(),
-            story_id: r.story_id?._id.toString(),
-            rating: r.rating,
-        })));
+        const ratings = trainRatings.length ? trainRatings : await Rating.find().populate('user_id story_id');
+        if (!ratings.length) return {};
 
-        if (!ratings.length) {
-            console.log('Không tìm thấy đánh giá trong cơ sở dữ liệu');
-            return {};
-        }
-
-        const validRatings = ratings.filter(r => {
-            const isValid = r.user_id && r.story_id && typeof r.rating === 'number';
-            if (!isValid) {
-                console.warn('Bản ghi đánh giá không hợp lệ:', {
-                    _id: r._id,
-                    user_id: r.user_id?._id.toString(),
-                    story_id: r.story_id?._id.toString(),
-                    rating: r.rating,
-                });
-            }
-            return isValid;
-        });
-
-        console.log('Đánh giá hợp lệ:', validRatings.map(r => ({
-            user_id: r.user_id._id.toString(),
-            story_id: r.story_id._id.toString(),
-            rating: r.rating,
-        })));
-
-        if (!validRatings.length) {
-            console.log('Không có đánh giá hợp lệ sau khi lọc');
-            return {};
-        }
+        const validRatings = ratings.filter(r => r.user_id && r.story_id && typeof r.rating === 'number');
+        if (!validRatings.length) return {};
 
         const users = [...new Set(validRatings.map(r => r.user_id._id.toString()))];
         const stories = [...new Set(validRatings.map(r => r.story_id._id.toString()))];
-        console.log('Người dùng trong ma trận:', users);
-        console.log('Truyện trong ma trận:', stories);
-
         const matrix = {};
         users.forEach(userId => {
             matrix[userId] = {};
             stories.forEach(storyId => {
-                const rating = validRatings.find(
-                    r => r.user_id._id.toString() === userId && r.story_id._id.toString() === storyId
-                );
+                const rating = validRatings.find(r => r.user_id._id.toString() === userId && r.story_id._id.toString() === storyId);
                 matrix[userId][storyId] = rating ? rating.rating : 0;
             });
         });
-
-        console.log('Ma trận người dùng-truyện:', matrix); // Ghi lại toàn bộ ma trận
         return matrix;
     } catch (error) {
         console.error('Lỗi trong getUserStoryMatrix:', error.message);
@@ -83,7 +45,6 @@ function cosineSimilarity(vecA, vecB) {
 
 function computeSimilarityMatrix(matrix) {
     try {
-        console.log('Computing similarity matrix');
         const similarityMatrix = {};
         const users = Object.keys(matrix);
         for (let i = 0; i < users.length; i++) {
@@ -96,7 +57,6 @@ function computeSimilarityMatrix(matrix) {
                 }
             }
         }
-        console.log('Similarity matrix computed');
         return similarityMatrix;
     } catch (error) {
         console.error('Error in computeSimilarityMatrix:', error.message);
@@ -106,16 +66,12 @@ function computeSimilarityMatrix(matrix) {
 
 function getTopKSimilarUsers(userId, similarityMatrix, k) {
     try {
-        if (!similarityMatrix[userId]) {
-            console.log('No similarity data for user:', userId);
-            return [];
-        }
+        if (!similarityMatrix[userId]) return [];
         const similarUsers = Object.entries(similarityMatrix[userId])
             .filter(([otherUser]) => otherUser !== userId)
             .sort((a, b) => b[1] - a[1])
             .slice(0, k)
             .map(entry => entry[0]);
-        console.log('Top', k, 'similar users for', userId, ':', similarUsers);
         return similarUsers;
     } catch (error) {
         console.error('Error in getTopKSimilarUsers:', error.message);
@@ -123,32 +79,30 @@ function getTopKSimilarUsers(userId, similarityMatrix, k) {
     }
 }
 
-async function collaborativeRecommend(userId, topN = 5, k = 5) {
-    try {
-        console.log('Starting collaborative recommendation for user:', userId);
-        const user = await User.findById(userId);
-        if (!user) {
-            console.log('User not found:', userId);
-            return [];
-        }
+async function collaborativeRecommend(userId, topN = 5, k = 5, trainRatings = null) {
+    const cached = await getCachedRecommendations(userId, 'collaborative');
+    if (cached) return cached;
 
-        const matrix = await getUserStoryMatrix();
+    try {
+        const user = await User.findById(userId).populate('preferred_categories');
+        if (!user) return [];
+
+        const matrix = await getUserStoryMatrix(trainRatings);
         if (Object.keys(matrix).length === 0) {
-            console.log('No ratings available for collaborative filtering');
-            return [];
+            const stories = await Story.find().populate('categories');
+            const filteredStories = stories
+                .filter(story => story.categories.some(cat => user.preferred_categories.some(pc => pc._id.equals(cat._id))))
+                .sort((a, b) => b.view - a.view)
+                .slice(0, topN);
+            await saveRecommendationsToCache(userId, 'collaborative', filteredStories);
+            return filteredStories;
         }
 
         const similarityMatrix = computeSimilarityMatrix(matrix);
-        if (!similarityMatrix[userId]) {
-            console.log('No similarity data for user:', userId);
-            return [];
-        }
+        if (!similarityMatrix[userId]) return [];
 
         const similarUsers = getTopKSimilarUsers(userId, similarityMatrix, k);
-        if (!similarUsers.length) {
-            console.log('No similar users found for:', userId);
-            return [];
-        }
+        if (!similarUsers.length) return [];
 
         const userStories = matrix[userId] || {};
         const recommendations = {};
@@ -169,7 +123,7 @@ async function collaborativeRecommend(userId, topN = 5, k = 5) {
         const predictedRatings = {};
         for (let story in recommendations) {
             if (recommendations[story].sumSim > 0) {
-                predictedRatings[story] = recommendations[story].sumSimRating / recommendations[story].sumSim + Math.random() * 0.05;
+                predictedRatings[story] = recommendations[story].sumSimRating / recommendations[story].sumSim;
             }
         }
 
@@ -178,8 +132,9 @@ async function collaborativeRecommend(userId, topN = 5, k = 5) {
             .slice(0, topN)
             .map(entry => entry[0]);
 
-        console.log('Collaborative recommended stories:', recommendedStoryIds);
-        return await Story.find({ _id: { $in: recommendedStoryIds } }).populate('categories');
+        const results = await Story.find({ _id: { $in: recommendedStoryIds } }).populate('categories');
+        await saveRecommendationsToCache(userId, 'collaborative', results);
+        return results;
     } catch (error) {
         console.error('Error in collaborativeRecommend:', error.message);
         return [];

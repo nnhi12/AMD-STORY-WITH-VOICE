@@ -77,7 +77,7 @@ async function getRecommendations(userId, method, forceRefresh = false) {
     }
 }
 
-router.get('/content-based/:userId', async (req, res) => {
+router.get('/contentBased/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         if (!userId) {

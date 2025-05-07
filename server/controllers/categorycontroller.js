@@ -16,14 +16,14 @@ function getSuitableAgeRanges(userAge) {
 
 router.get('/categories', async (req, res) => {
     try {
-        const categories = await categoryModel.find({}, 'name'); // Fetch only category names
-        console.log('Fetched categories:', categories);
-        res.json(categories);
+      const categories = await categoryModel.find({}, 'name _id'); // Lấy cả _id và name
+      console.log('Fetched categories:', categories);
+      res.json(categories);
     } catch (error) {
-        console.error('Error fetching categories:', error.message);
-        res.status(500).json({ message: 'Lỗi khi lấy danh sách thể loại' });
+      console.error('Error fetching categories:', error.message);
+      res.status(500).json({ message: 'Lỗi khi lấy danh sách thể loại' });
     }
-});
+  });
 
 // Thể loại
 router.get('/categories/:categoryId/stories', async (req, res) => {

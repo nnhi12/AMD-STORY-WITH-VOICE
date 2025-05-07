@@ -14,24 +14,28 @@ function Register() {
     confirmPassword: '',
     age: '',
     gender: 'other',
-    preferredCategories: [], // Thêm preferredCategories
+    preferredCategories: [],
   });
-  const [categories, setCategories] = useState([]); // Danh sách thể loại
+  const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  // Lấy danh sách thể loại khi component được mount
+  // Lấy danh sách thể loại và lưu vào localStorage
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(`${API_URL}/categories`);
-        setCategories(response.data);
+        const categoriesData = response.data;
+        setCategories(categoriesData);
+        // Lưu categories vào localStorage
+        localStorage.setItem('categories', JSON.stringify(categoriesData));
+        console.log('Đã lưu categories vào localStorage:', categoriesData);
         setLoadingCategories(false);
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        setMessage('Failed to load categories. Please try again.');
+        console.error('Lỗi khi lấy categories:', error);
+        setMessage('Không thể tải danh sách thể loại.');
         setLoadingCategories(false);
       }
     };
@@ -47,63 +51,60 @@ function Register() {
   };
 
   const handleCategoryChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-    setCreateForm((prevForm) => ({
-      ...prevForm,
-      preferredCategories: selectedOptions,
-    }));
+    const selectedOptions = Array.from(e.target.selectedOptions).map((option) => option.value);
+    setCreateForm((prevForm) => {
+      const newForm = { ...prevForm, preferredCategories: selectedOptions };
+      console.log('Updated createForm (category change):', newForm);
+      return newForm;
+    });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, voiceData = null) => {
+    if (e) e.preventDefault();
+    const formData = voiceData || createForm;
+    console.log('Submitting formData:', formData);
 
-    // Kiểm tra nếu có trường nào bỏ trống
-    if (!createForm.username || !createForm.email || !createForm.password || !createForm.confirmPassword || !createForm.age) {
-      setMessage('Please fill in all required fields.');
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.age) {
+      setMessage('Vui lòng nhập đầy đủ các trường bắt buộc.');
       return;
     }
 
-    // Kiểm tra độ dài mật khẩu
-    if (createForm.password.length < 8) {
-      setMessage('Password must be at least 8 characters long.');
+    if (formData.password.length < 8) {
+      setMessage('Mật khẩu phải có ít nhất 8 ký tự.');
       return;
     }
 
-    // Kiểm tra confirm password
-    if (createForm.password !== createForm.confirmPassword) {
-      setMessage('Passwords do not match. Please try again.');
+    if (formData.password !== formData.confirmPassword) {
+      setMessage('Mật khẩu và xác nhận mật khẩu không khớp.');
       return;
     }
 
-    // Kiểm tra age là số hợp lệ
-    if (isNaN(createForm.age) || createForm.age < 0) {
-      setMessage('Please enter a valid age.');
+    if (isNaN(formData.age) || formData.age < 0) {
+      setMessage('Vui lòng nhập tuổi hợp lệ.');
       return;
     }
 
     try {
       const response = await axios.post(`${API_URL}/register`, {
-        username: createForm.username,
-        password: createForm.password,
-        email: createForm.email,
-        age: parseInt(createForm.age),
-        gender: createForm.gender,
-        preferred_categories: createForm.preferredCategories, // Gửi danh sách thể loại
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        preferred_categories: formData.preferredCategories,
       });
 
       console.log('Account created:', response.data);
-      setMessage('Registration successful! Redirecting to login page...');
+      setMessage('Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...');
 
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (error) {
-      console.error('Error registering account:', error);
-      if (error.response && error.response.data && error.response.data.message) {
-        setMessage(error.response.data.message);
-      } else {
-        setMessage('Registration failed. Please try again.');
-      }
+      console.error('Lỗi khi đăng ký:', error);
+      setMessage(
+        error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
+      );
     }
   };
 
@@ -115,7 +116,75 @@ function Register() {
     setShowConfirmPassword((prevState) => !prevState);
   };
 
-  useVoiceControl('', '', '');
+  // Callbacks cho useVoiceControl
+  const callbacks = {
+    setUsername: (username) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, username };
+        console.log('Updated createForm (username):', newForm);
+        return newForm;
+      });
+    },
+    setPassword: (password) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, password, confirmPassword: password };
+        console.log('Updated createForm (password):', newForm);
+        return newForm;
+      });
+    },
+    setEmail: (email) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, email };
+        console.log('Updated createForm (email):', newForm);
+        return newForm;
+      });
+    },
+    setAge: (age) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, age };
+        console.log('Updated createForm (age):', newForm);
+        return newForm;
+      });
+    },
+    setGender: (gender) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, gender };
+        console.log('Updated createForm (gender):', newForm);
+        return newForm;
+      });
+    },
+    addCategory: (categoryId) => {
+      setCreateForm((prev) => {
+        const newCategories = prev.preferredCategories.includes(categoryId)
+          ? prev.preferredCategories
+          : [...prev.preferredCategories, categoryId];
+        const newForm = { ...prev, preferredCategories: newCategories };
+        console.log('Updated createForm (addCategory):', newForm);
+        return newForm;
+      });
+    },
+    removeCategory: (categoryId) => {
+      setCreateForm((prev) => {
+        const newCategories = prev.preferredCategories.filter((id) => id !== categoryId);
+        const newForm = { ...prev, preferredCategories: newCategories };
+        console.log('Updated createForm (removeCategory):', newForm);
+        return newForm;
+      });
+    },
+    submitRegister: (voiceData) => handleSubmit(null, voiceData),
+  };
+
+  // Gọi useVoiceControl (không cần truyền categories)
+  const { speak } = useVoiceControl({
+    callbacks,
+  });
+
+  // Phản hồi giọng nói khi có thông báo
+  useEffect(() => {
+    if (message && speak) {
+      speak(message);
+    }
+  }, [message, speak]);
 
   return (
     <div className="body-regis">
@@ -236,11 +305,12 @@ function Register() {
                     {showConfirmPassword ? 'Hide' : 'Show'}
                   </button>
                 </div>
-                {createForm.password === createForm.confirmPassword && createForm.confirmPassword !== '' && (
-                  <div className="password-match-check">
-                    <span className="checkmark">✔</span> Passwords match!
-                  </div>
-                )}
+                {createForm.password === createForm.confirmPassword &&
+                  createForm.confirmPassword !== '' && (
+                    <div className="password-match-check">
+                      <span className="checkmark">✔</span> Passwords match!
+                    </div>
+                  )}
               </div>
               <button
                 type="submit"

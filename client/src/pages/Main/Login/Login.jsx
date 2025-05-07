@@ -1,20 +1,18 @@
-import { React } from 'react';
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom';
 import './Login.css';
-import { Link } from 'react-router-dom';
-import { API_URL } from "../../../env.js";
-
+import { API_URL } from '../../../env.js';
 import useVoiceControl from '../../../utils/voiceControl.js';
-function Login() {
-  const history = useNavigate();
 
+function Login() {
+  const navigate = useNavigate();
   const [createForm, setCreateForm] = useState({
-    username: "",
-    password: ""
+    username: '',
+    password: '',
   });
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState('');
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCreateForm((prevForm) => ({
@@ -23,50 +21,100 @@ function Login() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, voiceData = null) => {
+    if (e) e.preventDefault();
+    const formData = voiceData || createForm; // Sử dụng voiceData nếu có
+    console.log('Submitting formData:', formData);
+    if (!formData.username || !formData.password) {
+      setErrorMessage('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+      return;
+    }
     try {
-      const response = await axios.post(`${API_URL}/login`, createForm);
-      const { account, user } = response.data; // Lấy thông tin tài khoản và người dùng
+      const response = await axios.post(`${API_URL}/login`, formData);
+      const { account, user } = response.data;
 
       if (account && user) {
-        setErrorMessage("Login success!");
-        // Lưu thông tin vào localStorage
-        localStorage.setItem('accountId', account._id); // Lưu ID tài khoản
+        localStorage.setItem('accountId', account._id);
         localStorage.setItem('username', account.username);
-        localStorage.setItem('userId', user._id)
-         // Lưu tên đăng nhập
-        history("/");
+        localStorage.setItem('userId', user._id);
+        setErrorMessage('Đăng nhập thành công!');
+        navigate('/');
       } else {
-        setErrorMessage("Username or password is incorrect");
+        setErrorMessage('Tên đăng nhập hoặc mật khẩu không đúng');
       }
     } catch (error) {
-      setErrorMessage("Username or password is incorrect");
+      console.error('Login error:', error.response?.data);
+      setErrorMessage(
+        error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng'
+      );
     }
   };
 
-  useVoiceControl("", "", "");
+  // Callbacks cho useVoiceControl
+  const callbacks = {
+    setUsername: (username) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, username };
+        console.log('Updated createForm (username):', newForm);
+        return newForm;
+      });
+    },
+    setPassword: (password) => {
+      setCreateForm((prev) => {
+        const newForm = { ...prev, password };
+        console.log('Updated createForm (password):', newForm);
+        return newForm;
+      });
+    },
+    submitLogin: (voiceData) => handleSubmit(null, voiceData), // Truyền voiceData
+  };
+
+  // Sử dụng useVoiceControl
+  const { speak } = useVoiceControl({
+    callbacks,
+  });
+
+  // Phản hồi giọng nói khi có thông báo
+  useEffect(() => {
+    if (errorMessage) {
+      speak(errorMessage);
+    }
+  }, [errorMessage, speak]);
+
   return (
     <div className="login-body">
       <div className="body-overlay"></div>
-      <Link to='/' className="back-button">
-          Quay lại trang chủ
-        </Link>
+      <Link to="/" className="back-button">
+        Quay lại trang chủ
+      </Link>
       <div className="login-container">
         <h2>Đăng Nhập</h2>
         <form onSubmit={handleSubmit}>
-          <input type="text" placeholder="Tên đăng nhập" name="username" value={createForm.username} onChange={handleChange} required />
-          <input type="password" placeholder="Mật khẩu" name="password" value={createForm.password} onChange={handleChange} required />
+          <input
+            type="text"
+            placeholder="Tên đăng nhập"
+            name="username"
+            value={createForm.username}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Mật khẩu"
+            name="password"
+            value={createForm.password}
+            onChange={handleChange}
+            required
+          />
           <button type="submit">Đăng Nhập</button>
         </form>
         {errorMessage && <p className="error-message">{errorMessage}</p>}
         <p className="sign-up-text">
-          Haven't had an account yet? <a href="/register">Sign up now!</a>
+          Chưa có tài khoản? <a href="/register">Đăng ký ngay!</a>
         </p>
         <p className="forgot-password-text">
           <a href="/forgot-password">Quên mật khẩu?</a>
         </p>
-        
       </div>
     </div>
   );

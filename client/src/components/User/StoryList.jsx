@@ -60,7 +60,7 @@ const StoryList = () => {
             try {
                 console.log('Fetching recommendations for user:', userId, 'Refresh:', refresh);
                 const [contentBasedResponse, collaborativeResponse, hybridResponse] = await Promise.all([
-                    axios.get(`${API_URL}/recommend/content-based/${userId}?refresh=${refresh}`),
+                    axios.get(`${API_URL}/recommend/contentBased/${userId}?refresh=${refresh}`),
                     axios.get(`${API_URL}/recommend/collaborative/${userId}?refresh=${refresh}`),
                     axios.get(`${API_URL}/recommend/hybrid/${userId}?refresh=${refresh}`),
                 ]);

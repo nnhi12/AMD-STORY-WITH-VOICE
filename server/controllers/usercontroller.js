@@ -44,42 +44,73 @@ router.put('/userinfo/:accountId', upload.single('image'), async (req, res) => {
   const image = req.file ? req.file.buffer : undefined;
 
   try {
+    // Kiểm tra accountId
     const account = await Account.findById(accountId);
     if (!account) {
       return res.status(404).json({ message: 'Account not found' });
     }
 
+    // Tìm user
     const user = await User.findOne({ account: accountId });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Kiểm tra dữ liệu đầu vào
+    if (!fullname && !email && !age && !gender && !preferred_categories && !image && !password) {
+      return res.status(400).json({ message: 'Cần ít nhất một trường để cập nhật' });
+    }
+
     // Cập nhật thông tin tài khoản (nếu có password)
     if (password) {
+      account.password = await bcrypt.hash(password, 10);
       await account.save();
     }
 
+    // Xử lý preferred_categories
+    let categories = user.preferred_categories;
+    if (preferred_categories) {
+      try {
+        categories = JSON.parse(preferred_categories);
+        if (!Array.isArray(categories)) {
+          return res.status(400).json({ message: 'preferred_categories phải là mảng' });
+        }
+        categories = categories.filter((id) => typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/));
+        if (categories.length === 0 && preferred_categories !== '[]') {
+          return res.status(400).json({ message: 'Không có ID thể loại hợp lệ trong preferred_categories' });
+        }
+      } catch (error) {
+        console.error('Lỗi khi phân tích preferred_categories:', error.message);
+        return res.status(400).json({ message: 'preferred_categories không hợp lệ', error: error.message });
+      }
+    }
+
     // Cập nhật thông tin người dùng
-    user.fullname = fullname || user.fullname;
-    user.email = email || user.email;
-    user.age = age || user.age;
-    user.gender = gender || user.gender;
-    user.preferred_categories = preferred_categories
-      ? JSON.parse(preferred_categories)
-      : user.preferred_categories;
+    user.fullname = fullname || user.fullname || '';
+    user.email = email || user.email || '';
+    user.age = age ? Number(age) : user.age || 0;
+    user.gender = gender || user.gender || 'other';
+    user.preferred_categories = categories;
     if (image) {
       user.image = image;
     }
 
     await user.save();
 
+    console.log('Dữ liệu nhận được:', req.body);
+    console.log('preferred_categories hợp lệ:', categories);
+    console.log('Cập nhật người dùng thành công:', user);
+
     res.json({
       message: 'User information updated successfully',
-      data: user,
+      data: {
+        ...user.toObject(),
+        image: user.image ? user.image.toString('base64') : null,
+      },
     });
   } catch (error) {
     console.error('Error updating user info:', error);
-    res.status(500).json({ message: 'An error occurred updating user info.' });
+    res.status(500).json({ message: 'An error occurred updating user info', error: error.message });
   }
 });
 
