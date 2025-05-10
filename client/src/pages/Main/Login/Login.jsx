@@ -23,7 +23,7 @@ function Login() {
 
   const handleSubmit = async (e, voiceData = null) => {
     if (e) e.preventDefault();
-    const formData = voiceData || createForm; // Sử dụng voiceData nếu có
+    const formData = voiceData || createForm;
     console.log('Submitting formData:', formData);
     if (!formData.username || !formData.password) {
       setErrorMessage('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
@@ -66,7 +66,11 @@ function Login() {
         return newForm;
       });
     },
-    submitLogin: (voiceData) => handleSubmit(null, voiceData), // Truyền voiceData
+    submitLogin: (voiceData) => handleSubmit(null, voiceData),
+    navigateToForgotPassword: () => {
+      speak('Đang chuyển đến trang thay đổi mật khẩu.');
+      navigate('/forgot-password');
+    },
   };
 
   // Sử dụng useVoiceControl

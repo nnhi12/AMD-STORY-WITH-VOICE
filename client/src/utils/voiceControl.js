@@ -65,7 +65,7 @@ const useVoiceControl = ({
   const preferredCategoriesRef = useRef([]);
   const fullnameRef = useRef('');
   const isEditingRef = useRef(false);
-  
+
 
   const getCategories = async () => {
     let categories = [];
@@ -286,6 +286,56 @@ const useVoiceControl = ({
             }
           }
 
+          //forgot password
+          if (location.pathname === '/forgot-password') {
+            if (transcript.startsWith('nhập email ')) {
+              const rawEmail = transcript.replace('nhập email ', '').trim();
+              const email = normalizeText(rawEmail);
+              console.log('Detected email input:', rawEmail, 'Normalized email:', email);
+              // Kiểm tra định dạng email cơ bản
+              if (email && email.includes('@') && email.includes('.') && callbacks.setEmail) {
+                callbacks.setEmail(email);
+                emailRef.current = email;
+                speak(`Đã nhập email: ${email}`);
+              } else {
+                console.log('Invalid email format or setEmail callback missing:', email);
+                speak('Vui lòng cung cấp email hợp lệ, ví dụ: test@example.com.');
+              }
+              return;
+            } else if (transcript.startsWith('nhập mật khẩu mới ')) {
+              const password = transcript.replace('nhập mật khẩu mới ', '').trim();
+              console.log('Detected new password input:', password);
+              if (password && callbacks.setNewPassword) {
+                callbacks.setNewPassword(password);
+                passwordRef.current = password;
+                speak('Đã nhập mật khẩu mới.');
+              } else {
+                console.log('Invalid password or setNewPassword callback missing');
+                speak('Vui lòng cung cấp mật khẩu hợp lệ.');
+              }
+              return;
+            } else if (transcript.includes('gửi yêu cầu') || transcript.includes('thay đổi mật khẩu')) {
+              console.log('Detected submit reset password command:', transcript);
+              console.log('Current emailRef:', emailRef.current, 'Current passwordRef:', passwordRef.current);
+              if (!emailRef.current || !passwordRef.current) {
+                console.log('Missing email or password for submit');
+                speak('Vui lòng nhập đầy đủ email và mật khẩu mới trước.');
+                return;
+              }
+              if (callbacks.submitResetPassword) {
+                console.log('Calling submitResetPassword with:', { email: emailRef.current, newPassword: passwordRef.current });
+                callbacks.submitResetPassword({
+                  email: emailRef.current,
+                  newPassword: passwordRef.current,
+                });
+              } else {
+                console.log('submitResetPassword callback not defined');
+                speak('Không thể gửi yêu cầu. Vui lòng thử lại.');
+              }
+              return;
+            }
+          }
+
           //userinfo
           if (location.pathname === '/userinfo') {
             if (transcript.includes('chỉnh sửa thông tin')) {
@@ -433,8 +483,16 @@ const useVoiceControl = ({
                   username: usernameRef.current,
                   password: passwordRef.current,
                 });
+
               } else {
                 speak('Không thể đăng nhập. Vui lòng thử lại.');
+              }
+              return;
+            } else if (transcript.includes('thay đổi mật khẩu') || transcript.includes('tôi quên mật khẩu')) {
+              if (callbacks.navigateToForgotPassword) {
+                callbacks.navigateToForgotPassword();
+              } else {
+                speak('Không thể chuyển đến trang thay đổi mật khẩu. Vui lòng thử lại.');
               }
               return;
             }
@@ -1335,7 +1393,12 @@ const useVoiceControl = ({
       transcript.startsWith('nhập mật khẩu ') ||
       transcript.includes('đăng nhập') ||
       transcript.startsWith('nhập tuổi ') ||
-      transcript.includes('tôi muốn đánh giá truyện được không')
+      transcript.includes('tôi muốn đánh giá truyện được không') ||
+      transcript.includes('thay đổi mật khẩu') ||
+      transcript.includes('tôi quên mật khẩu') ||
+      transcript.startsWith('nhập email ') ||
+      transcript.startsWith('nhập mật khẩu mới ') ||
+      transcript.includes('gửi yêu cầu')
     );
   };
 
@@ -1472,7 +1535,7 @@ const useVoiceControl = ({
   };
 
   // Read from start
-  const handleReadFromStart = async ()  => {
+  const handleReadFromStart = async () => {
     const user = localStorage.getItem('accountId');
     if (user) {
       await addToReadingList();
@@ -1495,9 +1558,9 @@ const useVoiceControl = ({
       });
   };
 
-  
+
   // Read latest chapter
-  const handleReadLatest = async ()  => {
+  const handleReadLatest = async () => {
     const user = localStorage.getItem('accountId');
     if (user) {
       await addToReadingList();
@@ -1978,6 +2041,36 @@ const useVoiceControl = ({
           setComments(response.data.comments || []);
         } catch (error) {
           speak('Có lỗi xảy ra khi đăng bình luận');
+        }
+        break;
+      case 'navigate_forgot_password':
+        speak('Đang chuyển đến trang thay đổi mật khẩu.', () => navigate('/forgot-password'));
+        break;
+      case 'input_new_password':
+        if (parameters.newPassword) {
+          speak('Đã nhập mật khẩu mới.', () => {
+            if (callbacks.setNewPassword) {
+              callbacks.setNewPassword(parameters.newPassword);
+              passwordRef.current = parameters.newPassword;
+            }
+          });
+        } else {
+          speak('Vui lòng cung cấp mật khẩu mới.');
+        }
+        break;
+      case 'submit_reset_password':
+        if (!emailRef.current || !passwordRef.current) {
+          speak('Vui lòng nhập đầy đủ email và mật khẩu mới trước.');
+          return;
+        }
+        if (callbacks.submitResetPassword) {
+          speak('Đang gửi yêu cầu thay đổi mật khẩu.');
+          callbacks.submitResetPassword({
+            email: emailRef.current,
+            newPassword: passwordRef.current,
+          });
+        } else {
+          speak('Không thể gửi yêu cầu. Vui lòng thử lại.');
         }
         break;
       default:

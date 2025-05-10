@@ -103,6 +103,11 @@ const commandTemplates = [
   { text: 'chọn thể loại yêu thích', intent: 'select_preferred_categories' },
   { text: 'lưu thông tin', intent: 'save_userinfo' },
   { text: 'cập nhật thông tin cá nhân', intent: 'save_userinfo' },
+  { text: 'thay đổi mật khẩu', intent: 'navigate_forgot_password' },
+  { text: 'tôi quên mật khẩu', intent: 'navigate_forgot_password' },
+  { text: 'nhập mật khẩu mới', intent: 'input_new_password' },
+  { text: 'gửi yêu cầu', intent: 'submit_reset_password' },
+  { text: 'thay đổi mật khẩu', intent: 'submit_reset_password' },
   // Mẫu câu hỏi mở
   { text: 'tác giả viết truyện mới', intent: 'story_related_unknown' },
   { text: 'tác giả viết chuyện mới', intent: 'story_related_unknown' },
